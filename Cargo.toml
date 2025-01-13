@@ -5,4 +5,6 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.5.26", features = ["derive"] }
+color-eyre = "0.6.3"
+ratatui = "0.29.0"
 tokio = { version = "1.43.0", features = ["full"] }

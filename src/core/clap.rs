@@ -5,7 +5,7 @@ use clap::{Parser, Subcommand};
 /// Spotify Client TUI - Control Spotify From Your Terminal
 pub struct Args {
     #[command(subcommand)]
-    pub command: Command,
+    pub command: Option<Command>,
 }
 
 #[derive(Subcommand, Debug, Clone)]

@@ -1,6 +1,7 @@
-use spotify_client_tui::run;
+use spotify_client_tui::{run, AppResult};
 
 #[tokio::main]
-async fn main() {
-    run();
+async fn main() -> AppResult<()> {
+    run().await?;
+    Ok(())
 }
