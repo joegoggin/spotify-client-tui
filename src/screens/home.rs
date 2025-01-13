@@ -1,3 +1,4 @@
+use log::debug;
 use ratatui::{crossterm::event::KeyEvent, Frame};
 
 use crate::{
@@ -32,8 +33,9 @@ impl Component for HomeScreen {
     fn handle_key_press(
         &mut self,
         _: &mut App,
-        _: KeyEvent,
+        key: KeyEvent,
     ) -> crate::AppResult<Option<crate::Message>> {
-        todo!()
+        debug!("{:#?}", key);
+        Ok(None)
     }
 }

@@ -2,6 +2,7 @@ use clap::Parser;
 use core::{
     app::App,
     clap::{Args, Command},
+    logging::setup_logging,
     tui::{init_terminal, install_panic_hook, restore_terminal},
 };
 use screens::{home::HomeScreen, Screen, ScreenType};
@@ -36,6 +37,8 @@ pub async fn run() -> AppResult<()> {
     }
 
     install_panic_hook();
+
+    setup_logging()?;
 
     let mut terminal = init_terminal()?;
     let mut current_screen: Box<dyn Screen> = Box::new(HomeScreen::default());
