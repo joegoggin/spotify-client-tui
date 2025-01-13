@@ -1,3 +1,5 @@
+use spotify_client_tui::run;
+
 fn main() {
-    println!("Hello, world!");
+    run();
 }
