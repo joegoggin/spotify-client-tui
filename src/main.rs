@@ -1,5 +1,6 @@
 use spotify_client_tui::run;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     run();
 }
