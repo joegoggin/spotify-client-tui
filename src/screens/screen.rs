@@ -5,12 +5,13 @@ use ratatui::crossterm::event::{self, Event};
 
 use crate::{components::Component, core::app::App, AppResult, Message};
 
-use super::{exit::ExitScreen, home::HomeScreen};
+use super::{create_config::CreateConfigFormScreen, exit::ExitScreen, home::HomeScreen};
 
 #[derive(ValueEnum, PartialEq, Debug, Clone)]
 pub enum ScreenType {
     Home,
     Exit,
+    ClientIdFormScreen,
 }
 
 pub trait Screen: ScreenClone + Component {
@@ -65,5 +66,6 @@ pub fn create_screen(screen_type: ScreenType) -> Box<dyn Screen> {
     match screen_type {
         ScreenType::Home => Box::new(HomeScreen::default()),
         ScreenType::Exit => Box::new(ExitScreen::default()),
+        ScreenType::ClientIdFormScreen => Box::new(CreateConfigFormScreen::default()),
     }
 }

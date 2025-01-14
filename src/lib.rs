@@ -5,10 +5,12 @@ use core::{
     logging::setup_logging,
     tui::{init_terminal, install_panic_hook, restore_terminal},
 };
-use screens::{home::HomeScreen, Screen, ScreenType};
+use log::debug;
+use screens::{create_config::CreateConfigFormScreen, home::HomeScreen, Screen, ScreenType};
 
 mod components;
 mod core;
+mod layout;
 mod screens;
 mod widgets;
 
@@ -23,7 +25,6 @@ pub enum Message {
 }
 
 pub async fn run() -> AppResult<()> {
-    let mut app = App::default();
     let args = Args::parse();
 
     if let Some(command) = args.command {
@@ -40,8 +41,15 @@ pub async fn run() -> AppResult<()> {
 
     setup_logging()?;
 
+    let mut app = App::new()?;
     let mut terminal = init_terminal()?;
     let mut current_screen: Box<dyn Screen> = Box::new(HomeScreen::default());
+
+    if app.config.client_id.is_none() || app.config.redirect_uri.is_none() {
+        current_screen = Box::new(CreateConfigFormScreen::new(&app.config));
+    }
+
+    debug!("{:#?}", app.config);
 
     while app.is_running {
         current_screen.tick();

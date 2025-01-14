@@ -5,18 +5,24 @@ use crate::{
     AppResult, Message,
 };
 
+use super::config::Config;
+
 #[derive(Clone)]
 pub struct App {
     pub is_running: bool,
     pub history: History,
+    pub config: Config,
 }
 
-impl Default for App {
-    fn default() -> Self {
-        Self {
+impl App {
+    pub fn new() -> AppResult<Self> {
+        let config = Config::new()?;
+
+        Ok(Self {
             is_running: true,
             history: History::default(),
-        }
+            config,
+        })
     }
 }
 
