@@ -49,8 +49,6 @@ pub async fn run() -> AppResult<()> {
         current_screen = Box::new(CreateConfigFormScreen::new(&app.config));
     }
 
-    debug!("{:#?}", app.config);
-
     while app.is_running {
         current_screen.tick();
         terminal.draw(|frame| current_screen.view(frame))?;

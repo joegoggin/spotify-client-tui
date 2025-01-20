@@ -5,7 +5,7 @@ use std::{
 };
 
 use dirs::home_dir;
-use log::error;
+use log::{debug, error};
 use serde::{Deserialize, Serialize};
 
 use crate::AppResult;
@@ -38,7 +38,13 @@ impl Config {
         self.redirect_uri = Some(redirect_uri);
 
         let data = serde_json::to_string_pretty(self)?;
-        let mut file = File::create(Self::get_file_path())?;
+        let file_path = Self::get_file_path();
+
+        if let Some(parent) = Path::new(&file_path).parent() {
+            fs::create_dir_all(parent)?;
+        };
+
+        let mut file = File::create(file_path.clone())?;
         file.write_all(data.as_bytes())?;
 
         Ok(())

@@ -1,3 +1,4 @@
+use log::debug;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Layout},
