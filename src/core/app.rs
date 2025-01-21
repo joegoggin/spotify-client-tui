@@ -1,6 +1,7 @@
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
 use crate::{
+    auth::server::AuthServer,
     screens::{exit::ExitScreen, Screen},
     AppResult, Message,
 };
@@ -13,6 +14,7 @@ pub struct App {
     pub history: History,
     pub config: Config,
     pub spotify_client: Option<SpotifyClient>,
+    pub auth_server: AuthServer,
 }
 
 impl App {
@@ -24,6 +26,7 @@ impl App {
             history: History::default(),
             config,
             spotify_client: None,
+            auth_server: AuthServer::default(),
         })
     }
 }

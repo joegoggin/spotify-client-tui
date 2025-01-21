@@ -7,6 +7,7 @@ use core::{
 };
 use screens::{auth::create_config::CreateConfigFormScreen, home::HomeScreen, Screen, ScreenType};
 
+mod auth;
 mod components;
 mod core;
 mod layout;
@@ -65,6 +66,11 @@ pub async fn run() -> AppResult<()> {
             match current_message.clone().unwrap() {
                 Message::ChangeScreen { new_screen } => {
                     app.history.prev.push(current_screen);
+
+                    if new_screen.get_screen_type() == ScreenType::OAuthScreen {
+                        app.auth_server.start(&app.config)?;
+                    }
+
                     current_screen = new_screen;
                     break;
                 }
@@ -85,6 +91,9 @@ pub async fn run() -> AppResult<()> {
 
                         current_screen = next_screen;
                     }
+                }
+                Message::ListenForCode => {
+                    app.auth_server.start(&app.config)?;
                 }
                 _ => {}
             }

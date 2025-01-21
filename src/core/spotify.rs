@@ -65,8 +65,4 @@ impl SpotifyClient {
             http_client: Client::new(),
         })
     }
-
-    pub fn set_code(&mut self, code: String) {
-        self.code = Some(code);
-    }
 }
