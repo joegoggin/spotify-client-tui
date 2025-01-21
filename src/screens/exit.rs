@@ -7,6 +7,7 @@ use ratatui::{
 use crate::{
     components::{screen_block::ScreenBlock, Component},
     core::app::App,
+    AppResult, Message,
 };
 
 use super::{Screen, ScreenType};
@@ -22,7 +23,7 @@ impl Default for ExitScreen {
 
 impl Screen for ExitScreen {
     fn get_screen_type(&self) -> ScreenType {
-        ScreenType::Home
+        ScreenType::Exit
     }
 
     fn get_default_key_press_enabled(&self) -> bool {
@@ -31,17 +32,15 @@ impl Screen for ExitScreen {
 }
 
 impl Component for ExitScreen {
-    fn view(&mut self, frame: &mut Frame) {
-        ScreenBlock::new_with_color("Exit Screen", Color::Red).view(frame);
+    fn view(&mut self, app: &App, frame: &mut Frame) {
+        ScreenBlock::new_with_color("Exit Screen", Color::Red).view(app, frame);
     }
 
-    fn tick(&mut self) {}
+    fn tick(&mut self, _: &mut App) -> AppResult<Option<Message>> {
+        Ok(None)
+    }
 
-    fn handle_key_press(
-        &mut self,
-        app: &mut App,
-        key: KeyEvent,
-    ) -> crate::AppResult<Option<crate::Message>> {
+    fn handle_key_press(&mut self, app: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
         match key.code {
             KeyCode::Char('q') => {
                 app.is_running = false;

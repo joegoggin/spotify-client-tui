@@ -5,7 +5,7 @@ use std::{
 };
 
 use dirs::home_dir;
-use log::{debug, error};
+use log::error;
 use serde::{Deserialize, Serialize};
 
 use crate::AppResult;
@@ -14,6 +14,7 @@ use crate::AppResult;
 pub struct Config {
     pub client_id: Option<String>,
     pub redirect_uri: Option<String>,
+    pub scope: Option<String>,
 }
 
 impl Config {
@@ -30,12 +31,14 @@ impl Config {
         Ok(Self {
             client_id: None,
             redirect_uri: None,
+            scope: None,
         })
     }
 
-    pub fn update(&mut self, client_id: String, redirect_uri: String) -> AppResult<()> {
-        self.client_id = Some(client_id);
-        self.redirect_uri = Some(redirect_uri);
+    pub fn update(&mut self, new_config: Config) -> AppResult<()> {
+        self.client_id = new_config.client_id;
+        self.redirect_uri = new_config.redirect_uri;
+        self.scope = new_config.scope;
 
         let data = serde_json::to_string_pretty(self)?;
         let file_path = Self::get_file_path();

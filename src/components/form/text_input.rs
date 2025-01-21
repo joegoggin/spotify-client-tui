@@ -82,7 +82,7 @@ impl Input for TextInput {
 }
 
 impl Component for TextInput {
-    fn view(&mut self, frame: &mut Frame) {
+    fn view(&mut self, _: &App, frame: &mut Frame) {
         let text = match self.is_password {
             true => {
                 let mut string = String::new();
@@ -202,7 +202,9 @@ impl Component for TextInput {
         }
     }
 
-    fn tick(&mut self) {
-        self.update_cursor_blink()
+    fn tick(&mut self, _: &mut App) -> AppResult<Option<Message>> {
+        self.update_cursor_blink();
+
+        Ok(None)
     }
 }

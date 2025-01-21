@@ -5,13 +5,14 @@ use crate::{
     AppResult, Message,
 };
 
-use super::config::Config;
+use super::{config::Config, spotify::SpotifyClient};
 
 #[derive(Clone)]
 pub struct App {
     pub is_running: bool,
     pub history: History,
     pub config: Config,
+    pub spotify_client: Option<SpotifyClient>,
 }
 
 impl App {
@@ -22,6 +23,7 @@ impl App {
             is_running: true,
             history: History::default(),
             config,
+            spotify_client: None,
         })
     }
 }

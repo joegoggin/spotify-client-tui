@@ -5,13 +5,13 @@ use core::{
     logging::setup_logging,
     tui::{init_terminal, install_panic_hook, restore_terminal},
 };
-use log::debug;
-use screens::{create_config::CreateConfigFormScreen, home::HomeScreen, Screen, ScreenType};
+use screens::{auth::create_config::CreateConfigFormScreen, home::HomeScreen, Screen, ScreenType};
 
 mod components;
 mod core;
 mod layout;
 mod screens;
+mod utils;
 mod widgets;
 
 pub type AppResult<T> = color_eyre::Result<T>;
@@ -22,6 +22,7 @@ pub enum Message {
     ChangeScreen { new_screen: Box<dyn Screen> },
     GoToPrevScreen,
     GoToNextScreen,
+    ListenForCode,
 }
 
 pub async fn run() -> AppResult<()> {
@@ -45,15 +46,20 @@ pub async fn run() -> AppResult<()> {
     let mut terminal = init_terminal()?;
     let mut current_screen: Box<dyn Screen> = Box::new(HomeScreen::default());
 
-    if app.config.client_id.is_none() || app.config.redirect_uri.is_none() {
+    if app.config.client_id.is_none()
+        || app.config.redirect_uri.is_none()
+        || app.config.scope.is_none()
+    {
         current_screen = Box::new(CreateConfigFormScreen::new(&app.config));
     }
 
     while app.is_running {
-        current_screen.tick();
-        terminal.draw(|frame| current_screen.view(frame))?;
+        let mut current_message = current_screen.tick(&mut app)?;
+        terminal.draw(|frame| current_screen.view(&app, frame))?;
 
-        let mut current_message = current_screen.handle_event(&mut app)?;
+        if current_message.is_none() {
+            current_message = current_screen.handle_event(&mut app)?
+        }
 
         while current_message.is_some() {
             match current_message.clone().unwrap() {

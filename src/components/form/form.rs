@@ -94,16 +94,18 @@ impl Form {
 }
 
 impl Component for Form {
-    fn view(&mut self, frame: &mut Frame) {
+    fn view(&mut self, app: &App, frame: &mut Frame) {
         for i in 0..self.inputs.len() {
-            self.inputs[i].view(frame)
+            self.inputs[i].view(app, frame)
         }
     }
 
-    fn tick(&mut self) {
+    fn tick(&mut self, app: &mut App) -> AppResult<Option<Message>> {
         for i in 0..self.inputs.len() {
-            self.inputs[i].tick();
+            self.inputs[i].tick(app)?;
         }
+
+        Ok(None)
     }
 
     fn handle_key_press(&mut self, app: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {

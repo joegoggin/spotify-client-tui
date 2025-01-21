@@ -4,10 +4,12 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+arboard = "3.4.1"
 clap = { version = "4.5.26", features = ["derive"] }
 color-eyre = "0.6.3"
 dirs = "6.0.0"
 log = "0.4.22"
+open = "5.3.2"
 ratatui = "0.29.0"
 reqwest = { version = "0.12.12", features = ["json"] }
 serde = { version = "1.0.217", features = ["derive"] }
