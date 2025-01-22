@@ -105,6 +105,14 @@ impl Component for Form {
             self.inputs[i].tick(app)?;
         }
 
+        if self.mode == FormMode::Insert && app.default_key_press_enabled {
+            app.default_key_press_enabled = false;
+        }
+
+        if self.mode == FormMode::Normal && !app.default_key_press_enabled {
+            app.default_key_press_enabled = true;
+        }
+
         Ok(None)
     }
 

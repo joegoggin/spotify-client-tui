@@ -15,16 +15,18 @@ use crate::{
     AppResult, Message,
 };
 
+use super::enter_code::EnterAuthCodeScreen;
+
 #[derive(Clone)]
-pub struct LogInFormScreen {
+pub struct ShowAuthLinkScreen {
     auth_url: String,
     menu: Menu,
     clipboard_is_copied: bool,
 }
 
-impl LogInFormScreen {
+impl ShowAuthLinkScreen {
     pub fn new(auth_url: String) -> Self {
-        let options = vec!["Copy To Clipboard", "Open In Browser"].to_string_vec();
+        let options = vec!["Copy To Clipboard", "Open In Browser", "Enter Code"].to_string_vec();
 
         Self {
             auth_url,
@@ -34,17 +36,17 @@ impl LogInFormScreen {
     }
 }
 
-impl Screen for LogInFormScreen {
+impl Screen for ShowAuthLinkScreen {
     fn get_screen_type(&self) -> ScreenType {
-        ScreenType::OAuthScreen
+        ScreenType::ShowAuthLinkScreen
     }
 }
 
-impl Component for LogInFormScreen {
+impl Component for ShowAuthLinkScreen {
     fn view(&mut self, app: &App, frame: &mut ratatui::Frame) {
         ScreenBlock::new("Log In").view(app, frame);
 
-        let message_area = get_centered_rect(80, 70, frame.area());
+        let message_area = get_centered_rect(80, 80, frame.area());
 
         let message_chunks = Layout::default()
             .margin(2)
@@ -90,6 +92,11 @@ impl Component for LogInFormScreen {
                     open::that(self.auth_url.clone())?;
 
                     Ok(None)
+                }
+                "Enter Code" => {
+                    let new_screen = Box::new(EnterAuthCodeScreen::default());
+
+                    Ok(Some(Message::ChangeScreen { new_screen }))
                 }
                 _ => Ok(None),
             },

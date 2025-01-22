@@ -15,6 +15,7 @@ pub struct App {
     pub config: Config,
     pub spotify_client: Option<SpotifyClient>,
     pub auth_server: AuthServer,
+    pub default_key_press_enabled: bool,
 }
 
 impl App {
@@ -27,20 +28,27 @@ impl App {
             config,
             spotify_client: None,
             auth_server: AuthServer::default(),
+            default_key_press_enabled: true,
         })
     }
 }
 
 impl App {
     pub fn handle_default_key_press(&self, key: KeyEvent) -> AppResult<Option<Message>> {
-        match key.code {
-            KeyCode::Char('H') => Ok(Some(Message::GoToPrevScreen)),
-            KeyCode::Char('L') => Ok(Some(Message::GoToNextScreen)),
-            KeyCode::Char('q') => Ok(Some(Message::ChangeScreen {
-                new_screen: Box::new(ExitScreen::default()),
-            })),
-            _ => Ok(None),
+        if self.default_key_press_enabled {
+            match key.code {
+                KeyCode::Char('H') => return Ok(Some(Message::GoToPrevScreen)),
+                KeyCode::Char('L') => return Ok(Some(Message::GoToNextScreen)),
+                KeyCode::Char('q') => {
+                    return Ok(Some(Message::ChangeScreen {
+                        new_screen: Box::new(ExitScreen::default()),
+                    }))
+                }
+                _ => {}
+            }
         }
+
+        Ok(None)
     }
 }
 

@@ -8,7 +8,7 @@ use crate::{
 };
 
 use super::{
-    auth::{create_config::CreateConfigFormScreen, log_in::LogInFormScreen},
+    auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
     Screen, ScreenType,
 };
 
@@ -36,7 +36,7 @@ impl Component for HomeScreen {
         match app.spotify_client.clone() {
             Some(spotify_client) => {
                 if spotify_client.access_token.is_none() {
-                    let new_screen = Box::new(LogInFormScreen::new(spotify_client.auth_url));
+                    let new_screen = Box::new(ShowAuthLinkScreen::new(spotify_client.auth_url));
 
                     return Ok(Some(Message::ChangeScreen { new_screen }));
                 }

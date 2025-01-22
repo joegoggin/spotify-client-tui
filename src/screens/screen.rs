@@ -10,7 +10,8 @@ pub enum ScreenType {
     Home,
     Exit,
     CreateConfigFormScreen,
-    OAuthScreen,
+    ShowAuthLinkScreen,
+    EnterAuthCodeScreen,
 }
 
 pub trait Screen: ScreenClone + Component {

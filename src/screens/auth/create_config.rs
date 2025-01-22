@@ -20,7 +20,7 @@ use crate::{
     AppResult, Message,
 };
 
-use super::log_in::LogInFormScreen;
+use super::show_link::ShowAuthLinkScreen;
 
 #[derive(Clone)]
 pub struct CreateConfigFormScreen {
@@ -121,7 +121,7 @@ impl Component for CreateConfigFormScreen {
         self.form.tick(app)?;
 
         if let Some(spotify_client) = app.spotify_client.clone() {
-            let new_screen = Box::new(LogInFormScreen::new(spotify_client.auth_url));
+            let new_screen = Box::new(ShowAuthLinkScreen::new(spotify_client.auth_url));
 
             return Ok(Some(Message::ChangeScreen { new_screen }));
         }
@@ -149,7 +149,7 @@ impl Component for CreateConfigFormScreen {
 
                     if let Some(spotify_client) = app.spotify_client.clone() {
                         let new_screen =
-                            Box::new(LogInFormScreen::new(spotify_client.auth_url.clone()));
+                            Box::new(ShowAuthLinkScreen::new(spotify_client.auth_url.clone()));
 
                         debug!("{:#?}", spotify_client.auth_url);
 

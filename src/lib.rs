@@ -5,7 +5,12 @@ use core::{
     logging::setup_logging,
     tui::{init_terminal, install_panic_hook, restore_terminal},
 };
+use log::debug;
 use screens::{auth::create_config::CreateConfigFormScreen, home::HomeScreen, Screen, ScreenType};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 
 mod auth;
 mod components;
@@ -23,7 +28,8 @@ pub enum Message {
     ChangeScreen { new_screen: Box<dyn Screen> },
     GoToPrevScreen,
     GoToNextScreen,
-    ListenForCode,
+    ListenForAuthCode,
+    SetAuthCode { code: String },
 }
 
 pub async fn run() -> AppResult<()> {
@@ -67,8 +73,10 @@ pub async fn run() -> AppResult<()> {
                 Message::ChangeScreen { new_screen } => {
                     app.history.prev.push(current_screen);
 
-                    if new_screen.get_screen_type() == ScreenType::OAuthScreen {
-                        app.auth_server.start(&app.config)?;
+                    if new_screen.get_screen_type() == ScreenType::ShowAuthLinkScreen {
+                        if !app.auth_server.running.load(Ordering::SeqCst) {
+                            app.auth_server.start(&app.config)?;
+                        }
                     }
 
                     current_screen = new_screen;
@@ -92,8 +100,28 @@ pub async fn run() -> AppResult<()> {
                         current_screen = next_screen;
                     }
                 }
-                Message::ListenForCode => {
+                Message::ListenForAuthCode => {
                     app.auth_server.start(&app.config)?;
+                }
+                Message::SetAuthCode { code } => {
+                    if let Some(mut spotify_client) = app.spotify_client.clone() {
+                        spotify_client
+                            .set_code_and_access_token(code, &app.config.clone())
+                            .await?;
+
+                        if spotify_client.access_token.is_some()
+                            || spotify_client.refresh_token.is_some()
+                        {
+                            // TODO: stop auth_server
+
+                            app.spotify_client = Some(spotify_client);
+
+                            let new_screen = Box::new(HomeScreen::default());
+
+                            current_message = Some(Message::ChangeScreen { new_screen });
+                            continue;
+                        }
+                    }
                 }
                 _ => {}
             }
