@@ -13,6 +13,7 @@ use crate::AppResult;
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Config {
     pub client_id: Option<String>,
+    pub client_secret: Option<String>,
     pub redirect_uri: Option<String>,
     pub scope: Option<String>,
 }
@@ -30,6 +31,7 @@ impl Config {
 
         Ok(Self {
             client_id: None,
+            client_secret: None,
             redirect_uri: None,
             scope: None,
         })
@@ -37,6 +39,7 @@ impl Config {
 
     pub fn update(&mut self, new_config: Config) -> AppResult<()> {
         self.client_id = new_config.client_id;
+        self.client_secret = new_config.client_secret;
         self.redirect_uri = new_config.redirect_uri;
         self.scope = new_config.scope;
 
