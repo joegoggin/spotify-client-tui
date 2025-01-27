@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 
-use base64::{
-    engine::{general_purpose, GeneralPurpose},
-    Engine,
-};
-use log::{debug, error};
+use base64::{engine::general_purpose, Engine};
+use log::error;
 use reqwest::{Client, Url};
 use serde_json::Value;
 

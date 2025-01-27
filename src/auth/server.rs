@@ -1,89 +1,194 @@
 use std::{
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
+    sync::Arc,
     thread::{self, JoinHandle},
 };
 
-use log::info;
-use tiny_http::{Header, Response, Server};
+use axum::{extract::Query, response::Html, routing::get, serve, Router};
+use log::{debug, info};
+use serde::Deserialize;
+use tokio::{
+    net::TcpListener,
+    runtime::Runtime,
+    sync::oneshot::{self, Sender},
+};
 
 use crate::{core::config::Config, AppResult};
 
-#[derive(Clone)]
+#[derive(Deserialize)]
+struct CallbackQuery {
+    code: String,
+}
+
 pub struct AuthServer {
-    pub running: Arc<AtomicBool>,
-    pub thread: Arc<Option<JoinHandle<()>>>,
+    pub thread: Option<JoinHandle<()>>,
+    pub sender: Option<Sender<()>>,
 }
 
 impl Default for AuthServer {
     fn default() -> Self {
         Self {
-            running: Arc::new(AtomicBool::new(false)),
-            thread: Arc::new(None),
+            thread: None,
+            sender: None,
         }
     }
 }
 
 impl AuthServer {
     pub fn start(&mut self, config: &Config) -> AppResult<()> {
-        info!("#### Starting Auth Server ####");
+        let (tx, rx) = oneshot::channel::<()>();
 
-        self.running = Arc::new(AtomicBool::new(true));
-        let running_clone = Arc::clone(&self.running);
+        self.sender = Some(tx);
 
-        if let Some(redirect_uri) = config.redirect_uri.clone() {
-            let thread = thread::spawn(move || {
-                let host = Self::get_host_from_redirect_url(&redirect_uri);
-                let server = Server::http(host.clone());
+        let rt = Runtime::new()?;
+        let host = Arc::new(Self::get_host_from_redirect_url(
+            &config.redirect_uri.clone().unwrap_or("".to_string()),
+        ));
 
-                info!("#### Server Running On {} ####", host);
+        let thread = thread::spawn(move || {
+            rt.block_on(async {
+                let handle_callback = |Query(query): Query<CallbackQuery>| async move {
+                    let code = &query.code;
+                    let html = format!(
+                        "<!DOCTYPE html>
+                        <html>
+                            <head>
+                                <title>Spotify Client TUI</title>
+                                <style>
+                                    html {{
+                                        box-sizing: border-box;
+                                        font-size: 16px;
+                                    }}
 
-                if let Ok(server) = server {
-                    for request in server.incoming_requests() {
-                        if !running_clone.load(Ordering::SeqCst) {
-                            break;
-                        }
+                                    *, *:before, *:after {{
+                                        box-sizing: inherit;
+                                    }}
 
-                        let url = request.url();
+                                    body, h1, h2, h3, h4, h5, h6, p, ol, ul {{
+                                        margin: 0;
+                                        padding: 0;
+                                        font-weight: normal;
+                                    }}
 
-                        if url.starts_with("/callback") {
-                            let code = url
-                                .split('?')
-                                .nth(1)
-                                .unwrap_or("")
-                                .split('=')
-                                .nth(1)
-                                .unwrap_or("")
-                                .to_string();
+                                    ol, ul {{
+                                        list-style: none;
+                                    }}
 
-                            let html = format!(
-                                "
-                                <html>
-                                    <head>
-                                        <title>Spotify Client TUI</title>
-                                    </head>
-                                    <body>
-                                        <h1>Code: {}</h1>
-                                    </body>
-                                </html>
-                                ",
-                                code
-                            );
+                                    img {{
+                                        max-width: 100%;
+                                        height: auto;
+                                    }}
 
-                            let response = Response::from_string(html)
-                                .with_header("Content-Type: text/html".parse::<Header>().unwrap());
+                                    body {{
+                                        background: #343633;
+                                    }}
 
-                            let _ = request.respond(response);
-                        }
-                    }
-                }
-            });
+                                    h1 {{
+                                        color: #45B69C;
+                                        font-size: 60px;
+                                        margin-bottom: 20px;
+                                    }}
 
-            self.thread = Arc::new(Some(thread));
+                                    h2 {{
+                                        color: white;
+                                    }}
+
+                                    #copied-title {{
+                                        color: #45B69C; 
+                                        margin-top: 40px;
+                                        display: none;
+                                    }}
+
+                                    button {{
+                                        width: max-content;
+                                        font-size: 20px;
+                                        padding: 10px;
+                                        color: #343633;
+                                        font-weight: bold;
+                                        border-radius: 10px;
+                                        background: #45B69C;
+                                        border: none;
+                                    }}
+
+                                    .container {{
+                                        width: 100%;
+                                        height: 100vh; 
+                                        display: flex;
+                                        flex-direction: column;
+                                        justify-content: center;
+                                        align-items: center;
+                                    }}
+
+                                    .code {{
+                                        width: 50%;
+                                        overflow: hidden;
+                                        word-break: break-all;
+                                        background: #7293A0;
+                                        color: white;
+                                        padding: 30px;
+                                        margin-top: 40px;
+                                        margin-bottom: 20px;
+                                        border-radius: 10px;
+                                    }}
+                                </style>
+                            </head>
+                            <body>
+                                <div class=\"container\">
+                                    <h1>Spotify Client TUI</h1>
+                                    <h2>Copy this authentication code to the terminal application in order to sign in.</h2>
+                                    <h3 id=\"copied-title\">Copied to clipboard!</h3>
+
+                                    <div class=\"code\">
+                                        <h2>{}</h2>
+                                    </div>
+
+                                    <button id=\"copy-button\">Copy to Clipboard</button>
+
+                                    <script>
+                                        document.getElementById('copy-button').addEventListener('click', function() {{
+                                            navigator.clipboard.writeText('{}').then(() => {{
+                                               document.getElementById('copied-title').style.display = 'block'; 
+                                            }});
+                                        }});
+                                    </script>
+                                </div>
+                            </body>
+                        </html>
+                    ",
+                        code,
+                        code
+                    );
+
+                    Html(html)
+                };
+
+                let router: Router = Router::new().route("/callback", get(handle_callback));
+
+                let listener = TcpListener::bind(&*host)
+                    .await
+                    .expect("failed to create listener for auth server");
+
+                serve(listener, router)
+                    .with_graceful_shutdown(async {
+                        rx.await.ok();
+                        info!("Shutting down server");
+                    })
+                    .await
+                    .expect("failed to run auth server")
+            })
+        });
+
+        self.thread = Some(thread);
+        Ok(())
+    }
+
+    pub fn stop(&mut self) -> AppResult<()> {
+        if let Some(sender) = self.sender.take() {
+            sender.send(()).ok();
         }
 
+        if let Some(thread) = self.thread.take() {
+            let _ = thread.join();
+        }
         Ok(())
     }
 
@@ -98,5 +203,16 @@ impl AuthServer {
         }
 
         host
+    }
+}
+
+impl Drop for AuthServer {
+    fn drop(&mut self) {
+        if let Some(sender) = self.sender.take() {
+            let _ = sender.send(());
+        }
+        if let Some(thread) = self.thread.take() {
+            let _ = thread.join();
+        }
     }
 }
