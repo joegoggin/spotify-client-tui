@@ -27,13 +27,15 @@ impl ScreenBlock {
 }
 
 impl Component for ScreenBlock {
-    fn view(&mut self, frame: &mut Frame) {
+    fn view(&mut self, _: &App, frame: &mut Frame) {
         let container = create_titled_block(&self.title, Alignment::Center, self.color);
 
         frame.render_widget(container, frame.area());
     }
 
-    fn tick(&mut self) {}
+    fn tick(&mut self, _: &mut App) -> AppResult<Option<Message>> {
+        Ok(None)
+    }
 
     fn handle_key_press(&mut self, _: &mut App, _: KeyEvent) -> AppResult<Option<Message>> {
         Ok(None)

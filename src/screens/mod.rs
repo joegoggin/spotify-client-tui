@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod exit;
 pub mod home;
 pub mod screen;
