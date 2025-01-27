@@ -1,4 +1,3 @@
-use log::debug;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Layout},
@@ -150,8 +149,6 @@ impl Component for CreateConfigFormScreen {
                     if let Some(spotify_client) = app.spotify_client.clone() {
                         let new_screen =
                             Box::new(ShowAuthLinkScreen::new(spotify_client.auth_url.clone()));
-
-                        debug!("{:#?}", spotify_client.auth_url);
 
                         return Ok(Some(Message::ChangeScreen { new_screen }));
                     }

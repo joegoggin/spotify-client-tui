@@ -4,7 +4,6 @@ use std::{
 };
 
 use axum::{extract::Query, response::Html, routing::get, serve, Router};
-use log::{debug, info};
 use serde::Deserialize;
 use tokio::{
     net::TcpListener,
@@ -141,7 +140,7 @@ impl AuthServer {
                                         <h2>{}</h2>
                                     </div>
 
-                                    <button id=\"copy-button\">Copy to Clipboard</button>
+                                   <button id=\"copy-button\">Copy to Clipboard</button>
 
                                     <script>
                                         document.getElementById('copy-button').addEventListener('click', function() {{
@@ -170,7 +169,6 @@ impl AuthServer {
                 serve(listener, router)
                     .with_graceful_shutdown(async {
                         rx.await.ok();
-                        info!("Shutting down server");
                     })
                     .await
                     .expect("failed to run auth server")

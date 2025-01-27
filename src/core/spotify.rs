@@ -1,18 +1,30 @@
-use std::collections::HashMap;
+use std::{
+    collections::HashMap,
+    fs::{self, File},
+    io::Write,
+    path::Path,
+};
 
 use base64::{engine::general_purpose, Engine};
+use dirs::home_dir;
 use log::error;
 use reqwest::{Client, Url};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use crate::AppResult;
 
 use super::config::Config;
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Credentials {
+    access_token: String,
+    refresh_token: String,
+}
+
 #[derive(Debug, Clone)]
 pub struct SpotifyClient {
-    pub access_token: Option<String>,
-    pub refresh_token: Option<String>,
+    pub credentials: Option<Credentials>,
     pub code: Option<String>,
     pub auth_url: String,
     http_client: Client,
@@ -63,9 +75,18 @@ impl SpotifyClient {
             }
         }
 
+        let mut credentials: Option<Credentials> = None;
+        let file_path = Self::get_file_path();
+
+        if Path::new(&file_path).exists() {
+            let data = fs::read_to_string(&file_path)?;
+            let credentials_data: Credentials = serde_json::from_str(&data)?;
+
+            credentials = Some(credentials_data);
+        }
+
         Ok(Self {
-            access_token: None,
-            refresh_token: None,
+            credentials,
             code: None,
             auth_url: url.to_string(),
             http_client: Client::new(),
@@ -108,19 +129,45 @@ impl SpotifyClient {
                         .json::<Value>()
                         .await?;
 
-                    if let Some(access_token) = response.get("access_token") {
-                        match access_token.to_owned() {
-                            Value::String(access_token) => self.access_token = Some(access_token),
+                    let mut access_token: Option<String> = None;
+                    let mut refresh_token: Option<String> = None;
+
+                    if let Some(access_token_value) = response.get("access_token") {
+                        match access_token_value.to_owned() {
+                            Value::String(access_token_value) => {
+                                access_token = Some(access_token_value);
+                            }
                             _ => {}
                         }
                     }
 
-                    if let Some(refresh_token) = response.get("refresh_token") {
-                        match refresh_token.to_owned() {
-                            Value::String(refresh_token) => {
-                                self.refresh_token = Some(refresh_token)
+                    if let Some(refresh_token_value) = response.get("refresh_token") {
+                        match refresh_token_value.to_owned() {
+                            Value::String(refresh_token_value) => {
+                                refresh_token = Some(refresh_token_value);
                             }
                             _ => {}
+                        }
+                    }
+
+                    if let Some(access_token) = access_token {
+                        if let Some(refresh_token) = refresh_token {
+                            let credentials = Credentials {
+                                refresh_token,
+                                access_token,
+                            };
+
+                            let data = serde_json::to_string_pretty(&credentials)?;
+                            let file_path = Self::get_file_path();
+
+                            if let Some(parent) = Path::new(&file_path).parent() {
+                                fs::create_dir_all(parent)?;
+                            }
+
+                            let mut file = File::create(file_path)?;
+                            file.write_all(data.as_bytes())?;
+
+                            self.credentials = Some(credentials);
                         }
                     }
                 }
@@ -128,5 +175,20 @@ impl SpotifyClient {
         }
 
         Ok(())
+    }
+
+    fn get_file_path() -> String {
+        match home_dir() {
+            Some(home_dir) => format!(
+                "{}/.config/spotify-client-tui/credentials.json",
+                home_dir.display()
+            ),
+            None => {
+                let error_message = "Unable to find home directory.";
+
+                error!("{}", error_message);
+                panic!("{}", error_message);
+            }
+        }
     }
 }

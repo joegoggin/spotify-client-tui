@@ -101,9 +101,7 @@ pub async fn run() -> AppResult<()> {
                             .set_code_and_access_token(code, &app.config.clone())
                             .await?;
 
-                        if spotify_client.access_token.is_some()
-                            || spotify_client.refresh_token.is_some()
-                        {
+                        if spotify_client.credentials.is_some() {
                             app.spotify_client = Some(spotify_client);
 
                             auth_server.stop()?;

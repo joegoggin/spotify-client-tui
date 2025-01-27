@@ -35,7 +35,7 @@ impl Component for HomeScreen {
     fn tick(&mut self, app: &mut App) -> AppResult<Option<Message>> {
         match app.spotify_client.clone() {
             Some(spotify_client) => {
-                if spotify_client.access_token.is_none() {
+                if spotify_client.credentials.is_none() {
                     let new_screen = Box::new(ShowAuthLinkScreen::new(spotify_client.auth_url));
 
                     return Ok(Some(Message::ChangeScreen { new_screen }));
