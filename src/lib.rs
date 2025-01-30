@@ -51,8 +51,11 @@ pub async fn run() -> AppResult<()> {
                         ControlCommand::NextSong => {
                             spotify_client.next_song(&app.config).await?;
                         }
-                        _ => {
-                            println!("{:?}", control_command);
+                        ControlCommand::PreviousSong => {
+                            spotify_client.previous_song(&app.config).await?;
+                        }
+                        ControlCommand::Shuffle => {
+                            spotify_client.toggle_shuffle(&app.config).await?;
                         }
                     }
                 }
