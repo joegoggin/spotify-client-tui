@@ -48,6 +48,9 @@ pub async fn run() -> AppResult<()> {
                         ControlCommand::PausePlay => {
                             spotify_client.toggle_pause_play(&app.config).await?;
                         }
+                        ControlCommand::NextSong => {
+                            spotify_client.next_song(&app.config).await?;
+                        }
                         _ => {
                             println!("{:?}", control_command);
                         }

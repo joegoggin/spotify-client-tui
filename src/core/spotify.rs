@@ -9,7 +9,7 @@ use async_recursion::async_recursion;
 use base64::{engine::general_purpose, Engine};
 use dirs::home_dir;
 use log::error;
-use reqwest::{Body, Client, Url};
+use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -21,12 +21,6 @@ use super::config::Config;
 pub struct Credentials {
     access_token: String,
     refresh_token: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct SpotifyError {
-    pub message: String,
-    pub status: i32,
 }
 
 #[derive(Debug, Clone)]
@@ -319,6 +313,31 @@ impl SpotifyClient {
 
                     return self.toggle_pause_play(config).await;
                 }
+            }
+        }
+
+        Ok(())
+    }
+
+    #[async_recursion]
+    pub async fn next_song(&mut self, config: &Config) -> AppResult<()> {
+        if let Some(credentials) = self.credentials.clone() {
+            let auth_header = format!("Bearer {}", credentials.access_token);
+
+            let response = self
+                .http_client
+                .post("https://api.spotify.com/v1/me/player/next")
+                .header("Authorization", auth_header)
+                .header("Content-Length", 0)
+                .send()
+                .await?;
+
+            let status = response.status();
+
+            if status == 401 {
+                self.refresh(config).await?;
+
+                return self.next_song(config).await;
             }
         }
 
