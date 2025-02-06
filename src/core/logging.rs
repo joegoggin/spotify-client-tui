@@ -1,14 +1,13 @@
 use std::{
     fs::{create_dir_all, File},
     io::{BufWriter, Write},
+    path::PathBuf,
     sync::Mutex,
 };
 
-use color_eyre::eyre::eyre;
-use dirs::home_dir;
 use log::{set_boxed_logger, set_max_level, Level, LevelFilter, Log, Metadata, Record};
 
-use crate::AppResult;
+use crate::{utils::directory::get_home_dir, AppResult};
 
 struct Logger {
     file: Mutex<BufWriter<File>>,
@@ -95,7 +94,7 @@ impl Log for Logger {
 }
 
 pub fn setup_logging() -> AppResult<()> {
-    let mut log_path = home_dir().ok_or_else(|| eyre!("Failed to find Home directory."))?;
+    let mut log_path = PathBuf::from(get_home_dir()?);
 
     log_path.push(".spotify-client-tui/logs");
     create_dir_all(&log_path)?;

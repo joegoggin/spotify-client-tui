@@ -7,13 +7,13 @@ use std::{
 
 use async_recursion::async_recursion;
 use base64::{engine::general_purpose, Engine};
-use dirs::home_dir;
+use color_eyre::eyre::eyre;
 use log::error;
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::AppResult;
+use crate::{utils::directory::get_home_dir, AppResult};
 
 use super::config::Config;
 
@@ -47,7 +47,7 @@ impl SpotifyClient {
                 error_message = error_message + "No Client ID provided.";
 
                 error!("{}", error_message);
-                panic!("{}", error_message);
+                return Err(eyre!(error_message));
             }
         }
 
@@ -60,7 +60,7 @@ impl SpotifyClient {
                 error_message = error_message + "No Redirect URI provided.";
 
                 error!("{}", error_message);
-                panic!("{}", error_message);
+                return Err(eyre!(error_message));
             }
         }
 
@@ -72,12 +72,12 @@ impl SpotifyClient {
                 error_message = error_message + "No Scope Provied.";
 
                 error!("{}", error_message);
-                panic!("{}", error_message);
+                return Err(eyre!(error_message));
             }
         }
 
         let mut credentials: Option<Credentials> = None;
-        let file_path = Self::get_file_path();
+        let file_path = Self::get_file_path()?;
 
         if Path::new(&file_path).exists() {
             let data = fs::read_to_string(&file_path)?;
@@ -159,7 +159,7 @@ impl SpotifyClient {
                             };
 
                             let data = serde_json::to_string_pretty(&credentials)?;
-                            let file_path = Self::get_file_path();
+                            let file_path = Self::get_file_path()?;
 
                             if let Some(parent) = Path::new(&file_path).parent() {
                                 fs::create_dir_all(parent)?;
@@ -223,7 +223,7 @@ impl SpotifyClient {
                     };
 
                     let data = serde_json::to_string_pretty(&new_credentials)?;
-                    let file_path = Self::get_file_path();
+                    let file_path = Self::get_file_path()?;
 
                     if let Some(parent) = Path::new(&file_path).parent() {
                         fs::create_dir_all(parent)?;
@@ -253,7 +253,10 @@ impl SpotifyClient {
             let status = response.status();
 
             if status == 204 {
-                panic!("No Spotify device active.");
+                let error_message = "No Spotify device active.";
+
+                error!("{}", error_message);
+                return Err(eyre!(error_message));
             }
 
             if status == 401 {
@@ -425,18 +428,12 @@ impl SpotifyClient {
         Ok(())
     }
 
-    fn get_file_path() -> String {
-        match home_dir() {
-            Some(home_dir) => format!(
-                "{}/.config/spotify-client-tui/credentials.json",
-                home_dir.display()
-            ),
-            None => {
-                let error_message = "Unable to find home directory.";
+    fn get_file_path() -> AppResult<String> {
+        let home_dir = get_home_dir()?;
 
-                error!("{}", error_message);
-                panic!("{}", error_message);
-            }
-        }
+        Ok(format!(
+            "{}/.config/spotify-client-tui/credentials.json",
+            home_dir
+        ))
     }
 }
