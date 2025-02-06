@@ -40,4 +40,6 @@ pub enum ControlCommand {
     PreviousSong,
     /// Toggle Shuffle
     Shuffle,
+    /// List Available Devices
+    Devices,
 }

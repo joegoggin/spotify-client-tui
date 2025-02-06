@@ -57,6 +57,9 @@ pub async fn run() -> AppResult<()> {
                         ControlCommand::Shuffle => {
                             spotify_client.toggle_shuffle(&app.config).await?;
                         }
+                        ControlCommand::Devices => {
+                            spotify_client.list_devices(&app.config).await?;
+                        }
                     }
                 }
 

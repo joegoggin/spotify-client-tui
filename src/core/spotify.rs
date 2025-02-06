@@ -240,7 +240,7 @@ impl SpotifyClient {
 
     #[async_recursion]
     pub async fn is_playing(&mut self, config: &Config) -> AppResult<bool> {
-        let auth_header = Self::get_auth_header(self)?;
+        let auth_header = self.get_auth_header()?;
 
         let response = self
             .http_client
@@ -279,7 +279,7 @@ impl SpotifyClient {
 
     #[async_recursion]
     pub async fn toggle_pause_play(&mut self, config: &Config) -> AppResult<()> {
-        let auth_header = Self::get_auth_header(self)?;
+        let auth_header = self.get_auth_header()?;
 
         if self.is_playing(config).await? {
             let response = self
@@ -320,7 +320,7 @@ impl SpotifyClient {
 
     #[async_recursion]
     pub async fn next_song(&mut self, config: &Config) -> AppResult<()> {
-        let auth_header = Self::get_auth_header(self)?;
+        let auth_header = self.get_auth_header()?;
 
         let response = self
             .http_client
@@ -343,7 +343,7 @@ impl SpotifyClient {
 
     #[async_recursion]
     pub async fn previous_song(&mut self, config: &Config) -> AppResult<()> {
-        let auth_header = Self::get_auth_header(self)?;
+        let auth_header = self.get_auth_header()?;
 
         let response = self
             .http_client
@@ -366,7 +366,7 @@ impl SpotifyClient {
 
     #[async_recursion]
     pub async fn toggle_shuffle(&mut self, config: &Config) -> AppResult<()> {
-        let auth_header = Self::get_auth_header(self)?;
+        let auth_header = self.get_auth_header()?;
 
         let response = self
             .http_client
@@ -418,8 +418,54 @@ impl SpotifyClient {
         Ok(())
     }
 
+    #[async_recursion]
+    pub async fn list_devices(&mut self, config: &Config) -> AppResult<()> {
+        let auth_header = self.get_auth_header()?;
+
+        let response = self
+            .http_client
+            .get("https://api.spotify.com/v1/me/player/devices")
+            .header("Authorization", auth_header)
+            .send()
+            .await?;
+
+        let status = response.status();
+
+        if status == 401 {
+            self.refresh(config).await?;
+
+            return self.list_devices(config).await;
+        }
+
+        if status == 200 {
+            let response_json = response.json::<Value>().await?;
+
+            if let Some(devices) = response_json.get("devices") {
+                if let Value::Array(devices) = devices {
+                    for device in devices {
+                        if let Some(id) = device.get("id") {
+                            if let Value::String(id) = id {
+                                println!("id: {}", id);
+                            }
+                        }
+
+                        if let Some(name) = device.get("name") {
+                            if let Value::String(name) = name {
+                                println!("name: {}", name);
+                            }
+                        }
+
+                        println!();
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     fn get_auth_header(&self) -> AppResult<String> {
-        match self.credentials.clone {
+        match self.credentials.clone() {
             Some(credentials) => Ok(format!("Bearer {}", credentials.access_token)),
             None => {
                 let error_message = "No credentials set";
