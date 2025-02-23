@@ -25,6 +25,7 @@ pub struct Credentials {
 
 #[derive(Debug, Clone)]
 pub struct SpotifyClient {
+    pub config: Config,
     pub credentials: Option<Credentials>,
     pub code: Option<String>,
     pub auth_url: String,
@@ -32,7 +33,7 @@ pub struct SpotifyClient {
 }
 
 impl SpotifyClient {
-    pub fn new(config: &Config) -> AppResult<Self> {
+    pub fn new(config: Config) -> AppResult<Self> {
         let mut url = Url::parse("https://accounts.spotify.com/authorize")?;
 
         url.query_pairs_mut().append_pair("response_type", "code");
@@ -87,6 +88,7 @@ impl SpotifyClient {
         }
 
         Ok(Self {
+            config,
             credentials,
             code: None,
             auth_url: url.to_string(),
@@ -94,16 +96,12 @@ impl SpotifyClient {
         })
     }
 
-    pub async fn set_code_and_access_token(
-        &mut self,
-        code: String,
-        config: &Config,
-    ) -> AppResult<()> {
+    pub async fn set_code_and_access_token(&mut self, code: String) -> AppResult<()> {
         self.code = Some(code.clone());
 
-        if let Some(client_id) = config.client_id.clone() {
-            if let Some(client_secret) = config.client_secret.clone() {
-                if let Some(redirect_uri) = config.redirect_uri.clone() {
+        if let Some(client_id) = self.config.client_id.clone() {
+            if let Some(client_secret) = self.config.client_secret.clone() {
+                if let Some(redirect_uri) = self.config.redirect_uri.clone() {
                     let auth_header = format!(
                         "Basic {}",
                         general_purpose::STANDARD.encode(format!(
@@ -178,10 +176,10 @@ impl SpotifyClient {
         Ok(())
     }
 
-    pub async fn refresh(&mut self, config: &Config) -> AppResult<()> {
+    pub async fn refresh(&mut self) -> AppResult<()> {
         if let Some(credentials) = self.credentials.clone() {
-            if let Some(client_id) = config.client_id.clone() {
-                if let Some(client_secret) = config.client_secret.clone() {
+            if let Some(client_id) = self.config.client_id.clone() {
+                if let Some(client_secret) = self.config.client_secret.clone() {
                     let auth_header = format!(
                         "Basic {}",
                         general_purpose::STANDARD.encode(format!(
@@ -239,7 +237,7 @@ impl SpotifyClient {
     }
 
     #[async_recursion]
-    pub async fn is_playing(&mut self, config: &Config) -> AppResult<bool> {
+    pub async fn is_playing(&mut self) -> AppResult<bool> {
         let auth_header = self.get_auth_header()?;
 
         let response = self
@@ -259,9 +257,9 @@ impl SpotifyClient {
         }
 
         if status == 401 {
-            self.refresh(config).await?;
+            self.refresh().await?;
 
-            return self.is_playing(config).await;
+            return self.is_playing().await;
         }
 
         if status == 200 {
@@ -278,10 +276,10 @@ impl SpotifyClient {
     }
 
     #[async_recursion]
-    pub async fn toggle_pause_play(&mut self, config: &Config) -> AppResult<()> {
+    pub async fn toggle_pause_play(&mut self) -> AppResult<()> {
         let auth_header = self.get_auth_header()?;
 
-        if self.is_playing(config).await? {
+        if self.is_playing().await? {
             let response = self
                 .http_client
                 .put("https://api.spotify.com/v1/me/player/pause")
@@ -293,9 +291,9 @@ impl SpotifyClient {
             let status = response.status();
 
             if status == 401 {
-                self.refresh(config).await?;
+                self.refresh().await?;
 
-                return self.toggle_pause_play(config).await;
+                return self.toggle_pause_play().await;
             }
         } else {
             let response = self
@@ -309,9 +307,9 @@ impl SpotifyClient {
             let status = response.status();
 
             if status == 401 {
-                self.refresh(config).await?;
+                self.refresh().await?;
 
-                return self.toggle_pause_play(config).await;
+                return self.toggle_pause_play().await;
             }
         }
 
@@ -319,7 +317,7 @@ impl SpotifyClient {
     }
 
     #[async_recursion]
-    pub async fn next_song(&mut self, config: &Config) -> AppResult<()> {
+    pub async fn next_song(&mut self) -> AppResult<()> {
         let auth_header = self.get_auth_header()?;
 
         let response = self
@@ -333,16 +331,16 @@ impl SpotifyClient {
         let status = response.status();
 
         if status == 401 {
-            self.refresh(config).await?;
+            self.refresh().await?;
 
-            return self.next_song(config).await;
+            return self.next_song().await;
         }
 
         Ok(())
     }
 
     #[async_recursion]
-    pub async fn previous_song(&mut self, config: &Config) -> AppResult<()> {
+    pub async fn previous_song(&mut self) -> AppResult<()> {
         let auth_header = self.get_auth_header()?;
 
         let response = self
@@ -356,16 +354,16 @@ impl SpotifyClient {
         let status = response.status();
 
         if status == 401 {
-            self.refresh(config).await?;
+            self.refresh().await?;
 
-            return self.previous_song(config).await;
+            return self.previous_song().await;
         }
 
         Ok(())
     }
 
     #[async_recursion]
-    pub async fn toggle_shuffle(&mut self, config: &Config) -> AppResult<()> {
+    pub async fn toggle_shuffle(&mut self) -> AppResult<()> {
         let auth_header = self.get_auth_header()?;
 
         let response = self
@@ -378,9 +376,9 @@ impl SpotifyClient {
         let status = response.status();
 
         if status == 401 {
-            self.refresh(config).await?;
+            self.refresh().await?;
 
-            return self.toggle_shuffle(config).await;
+            return self.toggle_shuffle().await;
         }
 
         if status == 200 {
@@ -407,9 +405,9 @@ impl SpotifyClient {
                     let status = response.status();
 
                     if status == 401 {
-                        self.refresh(config).await?;
+                        self.refresh().await?;
 
-                        return self.toggle_shuffle(config).await;
+                        return self.toggle_shuffle().await;
                     }
                 }
             }
@@ -419,7 +417,7 @@ impl SpotifyClient {
     }
 
     #[async_recursion]
-    pub async fn list_devices(&mut self, config: &Config) -> AppResult<()> {
+    pub async fn list_devices(&mut self) -> AppResult<()> {
         let auth_header = self.get_auth_header()?;
 
         let response = self
@@ -432,9 +430,9 @@ impl SpotifyClient {
         let status = response.status();
 
         if status == 401 {
-            self.refresh(config).await?;
+            self.refresh().await?;
 
-            return self.list_devices(config).await;
+            return self.list_devices().await;
         }
 
         if status == 200 {
@@ -465,7 +463,7 @@ impl SpotifyClient {
     }
 
     #[async_recursion]
-    pub async fn set_device(&mut self, device_id: String, config: &Config) -> AppResult<()> {
+    pub async fn set_device(&mut self, device_id: String) -> AppResult<()> {
         let auth_header = Self::get_auth_header(self)?;
 
         let body = json!({
@@ -484,9 +482,9 @@ impl SpotifyClient {
         let status = response.status();
 
         if status == 401 {
-            self.refresh(config).await?;
+            self.refresh().await?;
 
-            return self.set_device(device_id, config).await;
+            return self.set_device(device_id).await;
         }
 
         Ok(())
