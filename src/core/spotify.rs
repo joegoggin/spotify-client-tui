@@ -11,7 +11,7 @@ use color_eyre::eyre::eyre;
 use log::error;
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 
 use crate::{utils::directory::get_home_dir, AppResult};
 
@@ -459,6 +459,34 @@ impl SpotifyClient {
                     }
                 }
             }
+        }
+
+        Ok(())
+    }
+
+    #[async_recursion]
+    pub async fn set_device(&mut self, device_id: String, config: &Config) -> AppResult<()> {
+        let auth_header = Self::get_auth_header(self)?;
+
+        let body = json!({
+            "device_ids": [&device_id],
+            "play": true,
+        });
+
+        let response = self
+            .http_client
+            .put("https://api.spotify.com/v1/me/player")
+            .header("Authorization", auth_header)
+            .json(&body)
+            .send()
+            .await?;
+
+        let status = response.status();
+
+        if status == 401 {
+            self.refresh(config).await?;
+
+            return self.set_device(device_id, config).await;
         }
 
         Ok(())

@@ -60,6 +60,9 @@ pub async fn run() -> AppResult<()> {
                         ControlCommand::Devices => {
                             spotify_client.list_devices(&app.config).await?;
                         }
+                        ControlCommand::Device { id } => {
+                            spotify_client.set_device(id, &app.config).await?;
+                        }
                     }
                 }
 

@@ -42,4 +42,6 @@ pub enum ControlCommand {
     Shuffle,
     /// List Available Devices
     Devices,
+    /// Play On Device
+    Device { id: String },
 }
