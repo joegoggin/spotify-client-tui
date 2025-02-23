@@ -5,14 +5,15 @@ use std::{
     path::Path,
 };
 
+use async_recursion::async_recursion;
 use base64::{engine::general_purpose, Engine};
-use dirs::home_dir;
+use color_eyre::eyre::eyre;
 use log::error;
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde_json::{json, Value};
 
-use crate::AppResult;
+use crate::{utils::directory::get_home_dir, AppResult};
 
 use super::config::Config;
 
@@ -46,7 +47,7 @@ impl SpotifyClient {
                 error_message = error_message + "No Client ID provided.";
 
                 error!("{}", error_message);
-                panic!("{}", error_message);
+                return Err(eyre!(error_message));
             }
         }
 
@@ -59,7 +60,7 @@ impl SpotifyClient {
                 error_message = error_message + "No Redirect URI provided.";
 
                 error!("{}", error_message);
-                panic!("{}", error_message);
+                return Err(eyre!(error_message));
             }
         }
 
@@ -71,12 +72,12 @@ impl SpotifyClient {
                 error_message = error_message + "No Scope Provied.";
 
                 error!("{}", error_message);
-                panic!("{}", error_message);
+                return Err(eyre!(error_message));
             }
         }
 
         let mut credentials: Option<Credentials> = None;
-        let file_path = Self::get_file_path();
+        let file_path = Self::get_file_path()?;
 
         if Path::new(&file_path).exists() {
             let data = fs::read_to_string(&file_path)?;
@@ -158,7 +159,7 @@ impl SpotifyClient {
                             };
 
                             let data = serde_json::to_string_pretty(&credentials)?;
-                            let file_path = Self::get_file_path();
+                            let file_path = Self::get_file_path()?;
 
                             if let Some(parent) = Path::new(&file_path).parent() {
                                 fs::create_dir_all(parent)?;
@@ -177,18 +178,338 @@ impl SpotifyClient {
         Ok(())
     }
 
-    fn get_file_path() -> String {
-        match home_dir() {
-            Some(home_dir) => format!(
-                "{}/.config/spotify-client-tui/credentials.json",
-                home_dir.display()
-            ),
-            None => {
-                let error_message = "Unable to find home directory.";
+    pub async fn refresh(&mut self, config: &Config) -> AppResult<()> {
+        if let Some(credentials) = self.credentials.clone() {
+            if let Some(client_id) = config.client_id.clone() {
+                if let Some(client_secret) = config.client_secret.clone() {
+                    let auth_header = format!(
+                        "Basic {}",
+                        general_purpose::STANDARD.encode(format!(
+                            "{}:{}",
+                            client_id.clone(),
+                            client_secret.clone()
+                        ))
+                    );
 
-                error!("{}", error_message);
-                panic!("{}", error_message);
+                    let mut body = HashMap::<&str, &str>::new();
+
+                    body.insert("grant_type", "refresh_token");
+                    body.insert("refresh_token", &credentials.refresh_token);
+                    body.insert("client_id", &client_id);
+
+                    let response = self
+                        .http_client
+                        .post("https://accounts.spotify.com/api/token")
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .header("Authorization", auth_header)
+                        .form(&body)
+                        .send()
+                        .await?
+                        .json::<Value>()
+                        .await?;
+
+                    let mut access_token = credentials.access_token;
+
+                    if let Some(access_token_value) = response.get("access_token") {
+                        match access_token_value.to_owned() {
+                            Value::String(access_token_value) => access_token = access_token_value,
+                            _ => {}
+                        }
+                    }
+
+                    let new_credentials = Credentials {
+                        refresh_token: credentials.refresh_token,
+                        access_token,
+                    };
+
+                    let data = serde_json::to_string_pretty(&new_credentials)?;
+                    let file_path = Self::get_file_path()?;
+
+                    if let Some(parent) = Path::new(&file_path).parent() {
+                        fs::create_dir_all(parent)?;
+                    }
+
+                    let mut file = File::create(file_path)?;
+                    file.write_all(data.as_bytes())?;
+                }
             }
         }
+
+        Ok(())
+    }
+
+    #[async_recursion]
+    pub async fn is_playing(&mut self, config: &Config) -> AppResult<bool> {
+        let auth_header = self.get_auth_header()?;
+
+        let response = self
+            .http_client
+            .get("https://api.spotify.com/v1/me/player")
+            .header("Authorization", auth_header.clone())
+            .send()
+            .await?;
+
+        let status = response.status();
+
+        if status == 204 {
+            let error_message = "No Spotify device active.";
+
+            error!("{}", error_message);
+            return Err(eyre!(error_message));
+        }
+
+        if status == 401 {
+            self.refresh(config).await?;
+
+            return self.is_playing(config).await;
+        }
+
+        if status == 200 {
+            let response_json = response.json::<Value>().await?;
+
+            if let Some(is_playing) = response_json.get("is_playing") {
+                if let Value::Bool(is_playing) = is_playing {
+                    return Ok(is_playing.to_owned());
+                }
+            }
+        }
+
+        Ok(false)
+    }
+
+    #[async_recursion]
+    pub async fn toggle_pause_play(&mut self, config: &Config) -> AppResult<()> {
+        let auth_header = self.get_auth_header()?;
+
+        if self.is_playing(config).await? {
+            let response = self
+                .http_client
+                .put("https://api.spotify.com/v1/me/player/pause")
+                .header("Authorization", auth_header)
+                .header("Content-Length", 0)
+                .send()
+                .await?;
+
+            let status = response.status();
+
+            if status == 401 {
+                self.refresh(config).await?;
+
+                return self.toggle_pause_play(config).await;
+            }
+        } else {
+            let response = self
+                .http_client
+                .put("https://api.spotify.com/v1/me/player/play")
+                .header("Authorization", auth_header)
+                .header("Content-Length", 0)
+                .send()
+                .await?;
+
+            let status = response.status();
+
+            if status == 401 {
+                self.refresh(config).await?;
+
+                return self.toggle_pause_play(config).await;
+            }
+        }
+
+        Ok(())
+    }
+
+    #[async_recursion]
+    pub async fn next_song(&mut self, config: &Config) -> AppResult<()> {
+        let auth_header = self.get_auth_header()?;
+
+        let response = self
+            .http_client
+            .post("https://api.spotify.com/v1/me/player/next")
+            .header("Authorization", auth_header)
+            .header("Content-Length", 0)
+            .send()
+            .await?;
+
+        let status = response.status();
+
+        if status == 401 {
+            self.refresh(config).await?;
+
+            return self.next_song(config).await;
+        }
+
+        Ok(())
+    }
+
+    #[async_recursion]
+    pub async fn previous_song(&mut self, config: &Config) -> AppResult<()> {
+        let auth_header = self.get_auth_header()?;
+
+        let response = self
+            .http_client
+            .post("https://api.spotify.com/v1/me/player/previous")
+            .header("Authorization", auth_header)
+            .header("Content-Length", 0)
+            .send()
+            .await?;
+
+        let status = response.status();
+
+        if status == 401 {
+            self.refresh(config).await?;
+
+            return self.previous_song(config).await;
+        }
+
+        Ok(())
+    }
+
+    #[async_recursion]
+    pub async fn toggle_shuffle(&mut self, config: &Config) -> AppResult<()> {
+        let auth_header = self.get_auth_header()?;
+
+        let response = self
+            .http_client
+            .get("https://api.spotify.com/v1/me/player")
+            .header("Authorization", auth_header.clone())
+            .send()
+            .await?;
+
+        let status = response.status();
+
+        if status == 401 {
+            self.refresh(config).await?;
+
+            return self.toggle_shuffle(config).await;
+        }
+
+        if status == 200 {
+            let response_json = response.json::<Value>().await?;
+
+            if let Some(current_shuffle_state) = response_json.get("shuffle_state") {
+                if let Value::Bool(current_shuffle_state) = current_shuffle_state {
+                    let shuffle_state = !current_shuffle_state;
+
+                    let url = format!(
+                        "https://api.spotify.com/v1/me/player/shuffle?state={}",
+                        shuffle_state.to_string()
+                    );
+
+                    let response = self
+                        .http_client
+                        .put(url)
+                        .header("Content-Type", "application/x-www-form-urlencoded")
+                        .header("Authorization", auth_header)
+                        .header("Content-Length", 0)
+                        .send()
+                        .await?;
+
+                    let status = response.status();
+
+                    if status == 401 {
+                        self.refresh(config).await?;
+
+                        return self.toggle_shuffle(config).await;
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    #[async_recursion]
+    pub async fn list_devices(&mut self, config: &Config) -> AppResult<()> {
+        let auth_header = self.get_auth_header()?;
+
+        let response = self
+            .http_client
+            .get("https://api.spotify.com/v1/me/player/devices")
+            .header("Authorization", auth_header)
+            .send()
+            .await?;
+
+        let status = response.status();
+
+        if status == 401 {
+            self.refresh(config).await?;
+
+            return self.list_devices(config).await;
+        }
+
+        if status == 200 {
+            let response_json = response.json::<Value>().await?;
+
+            if let Some(devices) = response_json.get("devices") {
+                if let Value::Array(devices) = devices {
+                    for device in devices {
+                        if let Some(id) = device.get("id") {
+                            if let Value::String(id) = id {
+                                println!("id: {}", id);
+                            }
+                        }
+
+                        if let Some(name) = device.get("name") {
+                            if let Value::String(name) = name {
+                                println!("name: {}", name);
+                            }
+                        }
+
+                        println!();
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
+    #[async_recursion]
+    pub async fn set_device(&mut self, device_id: String, config: &Config) -> AppResult<()> {
+        let auth_header = Self::get_auth_header(self)?;
+
+        let body = json!({
+            "device_ids": [&device_id],
+            "play": true,
+        });
+
+        let response = self
+            .http_client
+            .put("https://api.spotify.com/v1/me/player")
+            .header("Authorization", auth_header)
+            .json(&body)
+            .send()
+            .await?;
+
+        let status = response.status();
+
+        if status == 401 {
+            self.refresh(config).await?;
+
+            return self.set_device(device_id, config).await;
+        }
+
+        Ok(())
+    }
+
+    fn get_auth_header(&self) -> AppResult<String> {
+        match self.credentials.clone() {
+            Some(credentials) => Ok(format!("Bearer {}", credentials.access_token)),
+            None => {
+                let error_message = "No credentials set";
+
+                error!("{}", error_message);
+                Err(eyre!(error_message))
+            }
+        }
+    }
+
+    fn get_file_path() -> AppResult<String> {
+        let home_dir = get_home_dir()?;
+
+        Ok(format!(
+            "{}/.config/spotify-client-tui/credentials.json",
+            home_dir
+        ))
     }
 }

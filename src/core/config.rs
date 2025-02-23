@@ -4,11 +4,9 @@ use std::{
     path::Path,
 };
 
-use dirs::home_dir;
-use log::error;
 use serde::{Deserialize, Serialize};
 
-use crate::AppResult;
+use crate::{utils::directory::get_home_dir, AppResult};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Config {
@@ -20,7 +18,7 @@ pub struct Config {
 
 impl Config {
     pub fn new() -> AppResult<Self> {
-        let file_path = Self::get_file_path();
+        let file_path = Self::get_file_path()?;
 
         if Path::new(&file_path).exists() {
             let data = fs::read_to_string(&file_path)?;
@@ -44,7 +42,7 @@ impl Config {
         self.scope = new_config.scope;
 
         let data = serde_json::to_string_pretty(self)?;
-        let file_path = Self::get_file_path();
+        let file_path = Self::get_file_path()?;
 
         if let Some(parent) = Path::new(&file_path).parent() {
             fs::create_dir_all(parent)?;
@@ -56,18 +54,12 @@ impl Config {
         Ok(())
     }
 
-    fn get_file_path() -> String {
-        match home_dir() {
-            Some(home_dir) => format!(
-                "{}/.config/spotify-client-tui/config.json",
-                home_dir.display()
-            ),
-            None => {
-                let error_message = "Unable to find home directory.";
+    fn get_file_path() -> AppResult<String> {
+        let home_dir = get_home_dir()?;
 
-                error!("{}", error_message);
-                panic!("{}", error_message);
-            }
-        }
+        Ok(format!(
+            "{}/.config/spotify-client-tui/config.json",
+            home_dir
+        ))
     }
 }

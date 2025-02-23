@@ -2,8 +2,9 @@ use auth::server::AuthServer;
 use clap::Parser;
 use core::{
     app::App,
-    clap::{Args, Command},
+    clap::{Args, Command, ControlCommand},
     logging::setup_logging,
+    spotify::SpotifyClient,
     tui::{init_terminal, install_panic_hook, restore_terminal},
 };
 use screens::{auth::create_config::CreateConfigFormScreen, home::HomeScreen, Screen, ScreenType};
@@ -31,21 +32,46 @@ pub enum Message {
 pub async fn run() -> AppResult<()> {
     let args = Args::parse();
 
+    install_panic_hook();
+
+    setup_logging()?;
+
+    let mut app = App::new()?;
+
     if let Some(command) = args.command {
         match command {
             Command::Control { control_command } => {
-                println!("{:#?}", control_command);
+                app.spotify_client = Some(SpotifyClient::new(&app.config)?);
+
+                if let Some(mut spotify_client) = app.spotify_client {
+                    match control_command {
+                        ControlCommand::PausePlay => {
+                            spotify_client.toggle_pause_play(&app.config).await?;
+                        }
+                        ControlCommand::NextSong => {
+                            spotify_client.next_song(&app.config).await?;
+                        }
+                        ControlCommand::PreviousSong => {
+                            spotify_client.previous_song(&app.config).await?;
+                        }
+                        ControlCommand::Shuffle => {
+                            spotify_client.toggle_shuffle(&app.config).await?;
+                        }
+                        ControlCommand::Devices => {
+                            spotify_client.list_devices(&app.config).await?;
+                        }
+                        ControlCommand::Device { id } => {
+                            spotify_client.set_device(id, &app.config).await?;
+                        }
+                    }
+                }
+
                 return Ok(());
             }
             _ => {}
         }
     }
 
-    install_panic_hook();
-
-    setup_logging()?;
-
-    let mut app = App::new()?;
     let mut terminal = init_terminal()?;
     let mut current_screen: Box<dyn Screen> = Box::new(HomeScreen::default());
     let mut auth_server = AuthServer::default();
