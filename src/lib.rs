@@ -3,6 +3,7 @@ use clap::Parser;
 use core::{
     app::App,
     clap::{Args, Command, ControlCommand},
+    config::Config,
     logging::setup_logging,
     spotify::SpotifyClient,
     tui::{init_terminal, install_panic_hook, restore_terminal},
@@ -29,6 +30,52 @@ pub enum Message {
     SetAuthCode { code: String },
 }
 
+fn is_control_command(args: &Args) -> bool {
+    if let Some(command) = args.command.clone() {
+        match command {
+            Command::Control { .. } => return true,
+            _ => {}
+        }
+    }
+    return false;
+}
+
+async fn handle_control_command(args: &Args, app: &App) -> AppResult<bool> {
+    if let Some(command) = args.command.clone() {
+        match command {
+            Command::Control { control_command } => {
+                if let Some(mut spotify_client) = app.spotify_client.clone() {
+                    match control_command {
+                        ControlCommand::PausePlay => {
+                            spotify_client.toggle_pause_play().await?;
+                        }
+                        ControlCommand::NextSong => {
+                            spotify_client.next_song().await?;
+                        }
+                        ControlCommand::PreviousSong => {
+                            spotify_client.previous_song().await?;
+                        }
+                        ControlCommand::Shuffle => {
+                            spotify_client.toggle_shuffle().await?;
+                        }
+                        ControlCommand::Devices => {
+                            spotify_client.list_devices().await?;
+                        }
+                        ControlCommand::Device { id } => {
+                            spotify_client.set_device(id).await?;
+                        }
+                    }
+                }
+
+                return Ok(true);
+            }
+            _ => {}
+        }
+    }
+
+    return Ok(false);
+}
+
 pub async fn run() -> AppResult<()> {
     let args = Args::parse();
 
@@ -37,51 +84,23 @@ pub async fn run() -> AppResult<()> {
     setup_logging()?;
 
     let mut app = App::new()?;
+    let config = Config::new()?;
 
-    if let Some(command) = args.command {
-        match command {
-            Command::Control { control_command } => {
-                app.spotify_client = Some(SpotifyClient::new(&app.config)?);
+    let mut current_screen: Box<dyn Screen> = Box::new(HomeScreen::default());
 
-                if let Some(mut spotify_client) = app.spotify_client {
-                    match control_command {
-                        ControlCommand::PausePlay => {
-                            spotify_client.toggle_pause_play(&app.config).await?;
-                        }
-                        ControlCommand::NextSong => {
-                            spotify_client.next_song(&app.config).await?;
-                        }
-                        ControlCommand::PreviousSong => {
-                            spotify_client.previous_song(&app.config).await?;
-                        }
-                        ControlCommand::Shuffle => {
-                            spotify_client.toggle_shuffle(&app.config).await?;
-                        }
-                        ControlCommand::Devices => {
-                            spotify_client.list_devices(&app.config).await?;
-                        }
-                        ControlCommand::Device { id } => {
-                            spotify_client.set_device(id, &app.config).await?;
-                        }
-                    }
-                }
+    if config.client_id.is_none() || config.redirect_uri.is_none() || config.scope.is_none() {
+        current_screen = Box::new(CreateConfigFormScreen::new(&config));
+    } else {
+        app.spotify_client = Some(SpotifyClient::new(config)?);
 
-                return Ok(());
-            }
-            _ => {}
+        if is_control_command(&args) {
+            handle_control_command(&args, &app).await?;
+            return Ok(());
         }
     }
 
     let mut terminal = init_terminal()?;
-    let mut current_screen: Box<dyn Screen> = Box::new(HomeScreen::default());
     let mut auth_server = AuthServer::default();
-
-    if app.config.client_id.is_none()
-        || app.config.redirect_uri.is_none()
-        || app.config.scope.is_none()
-    {
-        current_screen = Box::new(CreateConfigFormScreen::new(&app.config));
-    }
 
     while app.is_running {
         let mut current_message = current_screen.tick(&mut app)?;
@@ -96,8 +115,16 @@ pub async fn run() -> AppResult<()> {
                 Message::ChangeScreen { new_screen } => {
                     app.history.prev.push(current_screen);
 
-                    if new_screen.get_screen_type() == ScreenType::ShowAuthLinkScreen {
-                        auth_server.start(&app.config)?;
+                    if let Some(spotify_client) = &app.spotify_client {
+                        if new_screen.get_screen_type() == ScreenType::ShowAuthLinkScreen {
+                            auth_server.start(&spotify_client.config)?;
+                        }
+                    }
+
+                    if new_screen.get_screen_type() == ScreenType::Home && is_control_command(&args)
+                    {
+                        app.is_running = false;
+                        handle_control_command(&args, &app).await?;
                     }
 
                     current_screen = new_screen;
@@ -123,9 +150,7 @@ pub async fn run() -> AppResult<()> {
                 }
                 Message::SetAuthCode { code } => {
                     if let Some(mut spotify_client) = app.spotify_client.clone() {
-                        spotify_client
-                            .set_code_and_access_token(code, &app.config.clone())
-                            .await?;
+                        spotify_client.set_code_and_access_token(code).await?;
 
                         if spotify_client.credentials.is_some() {
                             app.spotify_client = Some(spotify_client);

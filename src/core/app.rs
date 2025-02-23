@@ -5,25 +5,21 @@ use crate::{
     AppResult, Message,
 };
 
-use super::{config::Config, spotify::SpotifyClient};
+use super::spotify::SpotifyClient;
 
 #[derive(Clone)]
 pub struct App {
     pub is_running: bool,
     pub history: History,
-    pub config: Config,
     pub spotify_client: Option<SpotifyClient>,
     pub default_key_press_enabled: bool,
 }
 
 impl App {
     pub fn new() -> AppResult<Self> {
-        let config = Config::new()?;
-
         Ok(Self {
             is_running: true,
             history: History::default(),
-            config,
             spotify_client: None,
             default_key_press_enabled: true,
         })

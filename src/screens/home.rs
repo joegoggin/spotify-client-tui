@@ -3,7 +3,7 @@ use ratatui::{crossterm::event::KeyEvent, style::Color, Frame};
 
 use crate::{
     components::{screen_block::ScreenBlock, Component},
-    core::{app::App, spotify::SpotifyClient},
+    core::{app::App, config::Config, spotify::SpotifyClient},
     AppResult, Message,
 };
 
@@ -44,7 +44,8 @@ impl Component for HomeScreen {
                 Ok(None)
             }
             None => {
-                let result = SpotifyClient::new(&app.config);
+                let config = Config::new()?;
+                let result = SpotifyClient::new(config.clone());
 
                 match result {
                     Ok(spotify_client) => {
@@ -53,7 +54,7 @@ impl Component for HomeScreen {
                         Ok(None)
                     }
                     Err(_) => {
-                        let new_screen = Box::new(CreateConfigFormScreen::new(&app.config));
+                        let new_screen = Box::new(CreateConfigFormScreen::new(&config));
 
                         Ok(Some(Message::ChangeScreen { new_screen }))
                     }

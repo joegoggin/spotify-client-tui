@@ -143,8 +143,9 @@ impl Component for CreateConfigFormScreen {
                         scope: Some(self.get_scope()),
                     };
 
-                    app.spotify_client = Some(SpotifyClient::new(&new_config)?);
-                    app.config.update(new_config)?;
+                    let mut spotify_client = SpotifyClient::new(new_config.clone())?;
+                    spotify_client.config.update(new_config.clone())?;
+                    app.spotify_client = Some(spotify_client);
 
                     if let Some(spotify_client) = app.spotify_client.clone() {
                         let new_screen =
