@@ -12,6 +12,12 @@ pub enum ScreenType {
     CreateConfigFormScreen,
     ShowAuthLinkScreen,
     EnterAuthCodeScreen,
+    NowPlayingScreen,
+    ViewArtistScreen,
+    ViewAlbumScreen,
+    QueueScreen,
+    SearchScreen,
+    LibraryScreen,
 }
 
 pub trait Screen: ScreenClone + Component {

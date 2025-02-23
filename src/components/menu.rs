@@ -8,7 +8,9 @@ use ratatui::{
     Frame,
 };
 
-use crate::{widgets::block::create_block, AppResult, Message};
+use crate::{core::app::App, widgets::block::create_block, AppResult, Message};
+
+use super::Component;
 
 #[derive(Clone)]
 pub struct Menu {
@@ -39,7 +41,20 @@ impl Menu {
         }
     }
 
-    pub fn view(&mut self, frame: &mut Frame) {
+    pub fn get_current_item(&self) -> String {
+        self.menu_items[self.current_menu_index].clone()
+    }
+
+    fn get_item_color(&self, index: usize) -> Color {
+        if self.current_menu_index == index {
+            return Color::Blue;
+        }
+
+        Color::White
+    }
+}
+impl Component for Menu {
+    fn view(&mut self, _: &App, frame: &mut Frame) {
         if self.show_menu {
             let mut constraints: Vec<Constraint> = Vec::new();
             let mut items: Vec<Paragraph> = Vec::new();
@@ -78,7 +93,11 @@ impl Menu {
         }
     }
 
-    pub fn handle_key_press(&mut self, key: KeyEvent) -> AppResult<Option<Message>> {
+    fn tick(&mut self, _: &mut App) -> AppResult<Option<Message>> {
+        Ok(None)
+    }
+
+    fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
         match key.code {
             KeyCode::Char('j') => {
                 if self.current_menu_index < self.menu_items.len() - 1 {
@@ -98,17 +117,5 @@ impl Menu {
             }
             _ => Ok(None),
         }
-    }
-
-    pub fn get_current_item(&self) -> String {
-        self.menu_items[self.current_menu_index].clone()
-    }
-
-    fn get_item_color(&self, index: usize) -> Color {
-        if self.current_menu_index == index {
-            return Color::Blue;
-        }
-
-        Color::White
     }
 }

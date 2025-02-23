@@ -38,7 +38,7 @@ impl Prompt {
 
 impl Component for Prompt {
     fn view(&mut self, _: &App, frame: &mut Frame) {
-        let container_area = get_centered_rect(50, 50, frame.area());
+        let container_area = get_centered_rect(70, 50, frame.area());
         let container = create_block(self.color);
         let prompt_paragraph = Paragraph::new(self.prompt.clone())
             .centered()

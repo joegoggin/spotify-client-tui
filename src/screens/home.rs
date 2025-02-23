@@ -1,23 +1,46 @@
-use log::debug;
-use ratatui::{crossterm::event::KeyEvent, style::Color, Frame};
+use ratatui::{
+    crossterm::event::{KeyCode, KeyEvent},
+    style::Color,
+    Frame,
+};
 
 use crate::{
-    components::{screen_block::ScreenBlock, Component},
+    components::{menu::Menu, screen_block::ScreenBlock, Component},
     core::{app::App, config::Config, spotify::SpotifyClient},
+    utils::vec::ToStringVec,
     AppResult, Message,
 };
 
 use super::{
     auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
+    library::LibraryScreen,
+    now_playing::NowPlayingScreen,
+    queue::QueueScreen,
+    search::SearchScreen,
+    view_album::ViewAlbumScreen,
+    view_artist::ViewArtistScreen,
     Screen, ScreenType,
 };
 
 #[derive(Clone)]
-pub struct HomeScreen;
+pub struct HomeScreen {
+    menu: Menu,
+}
 
 impl Default for HomeScreen {
     fn default() -> Self {
-        Self
+        let menu_items = vec![
+            "Now Playing",
+            "View Artist",
+            "View Album",
+            "Queue",
+            "Search",
+            "Library",
+        ];
+
+        Self {
+            menu: Menu::new(menu_items.to_string_vec()),
+        }
     }
 }
 
@@ -30,6 +53,7 @@ impl Screen for HomeScreen {
 impl Component for HomeScreen {
     fn view(&mut self, app: &App, frame: &mut Frame) {
         ScreenBlock::new_with_color("Spotify Client TUI", Color::Green).view(app, frame);
+        self.menu.view(app, frame);
     }
 
     fn tick(&mut self, app: &mut App) -> AppResult<Option<Message>> {
@@ -51,20 +75,46 @@ impl Component for HomeScreen {
                     Ok(spotify_client) => {
                         app.spotify_client = Some(spotify_client);
 
-                        Ok(None)
+                        return Ok(None);
                     }
                     Err(_) => {
                         let new_screen = Box::new(CreateConfigFormScreen::new(&config));
 
-                        Ok(Some(Message::ChangeScreen { new_screen }))
+                        return Ok(Some(Message::ChangeScreen { new_screen }));
                     }
                 }
             }
         }
     }
 
-    fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
-        debug!("{:#?}", key);
-        Ok(None)
+    fn handle_key_press(&mut self, app: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
+        if let Some(message) = self.menu.handle_key_press(app, key)? {
+            return Ok(Some(message));
+        }
+
+        match key.code {
+            KeyCode::Enter => match self.menu.get_current_item().as_str() {
+                "Now Playing" => Ok(Some(Message::ChangeScreen {
+                    new_screen: Box::new(NowPlayingScreen::default()),
+                })),
+                "View Artist" => Ok(Some(Message::ChangeScreen {
+                    new_screen: Box::new(ViewArtistScreen::default()),
+                })),
+                "View Album" => Ok(Some(Message::ChangeScreen {
+                    new_screen: Box::new(ViewAlbumScreen::default()),
+                })),
+                "Queue" => Ok(Some(Message::ChangeScreen {
+                    new_screen: Box::new(QueueScreen::default()),
+                })),
+                "Search" => Ok(Some(Message::ChangeScreen {
+                    new_screen: Box::new(SearchScreen::default()),
+                })),
+                "Library" => Ok(Some(Message::ChangeScreen {
+                    new_screen: Box::new(LibraryScreen::default()),
+                })),
+                _ => Ok(None),
+            },
+            _ => Ok(None),
+        }
     }
 }

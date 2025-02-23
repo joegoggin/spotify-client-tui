@@ -67,15 +67,15 @@ impl Component for ShowAuthLinkScreen {
         frame.render_widget(link, message_chunks[1]);
 
         self.menu.area = Some(message_chunks[2]);
-        self.menu.view(frame);
+        self.menu.view(app, frame);
     }
 
     fn tick(&mut self, _: &mut App) -> AppResult<Option<Message>> {
         Ok(None)
     }
 
-    fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
-        if let Some(message) = self.menu.handle_key_press(key)? {
+    fn handle_key_press(&mut self, app: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
+        if let Some(message) = self.menu.handle_key_press(app, key)? {
             return Ok(Some(message));
         }
 
