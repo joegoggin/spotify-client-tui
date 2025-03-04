@@ -1,9 +1,9 @@
 use log::debug;
 use ratatui::{
     crossterm::event::KeyEvent,
-    layout::{Constraint, Layout},
-    style::Color,
-    widgets::{Paragraph, Wrap},
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Style},
+    widgets::{Gauge, Paragraph, Wrap},
     Frame,
 };
 
@@ -42,6 +42,8 @@ impl Component for NowPlayingScreen {
                 let song_string = format!("Song: {}", now_playing.song);
                 let mut artist_string = "Artists: ".to_string();
                 let album_string = format!("Album: {}", now_playing.album);
+                let progress_string = now_playing.get_progress_string();
+                let song_length_string = now_playing.get_song_length_string();
 
                 for (index, value) in now_playing.artists.iter().enumerate() {
                     if index == now_playing.artists.len() - 1 {
@@ -60,19 +62,48 @@ impl Component for NowPlayingScreen {
                 let album_paragrah = Paragraph::new(album_string)
                     .centered()
                     .wrap(Wrap { trim: false });
+                let progress_paragraph = Paragraph::new(progress_string)
+                    .left_aligned()
+                    .wrap(Wrap { trim: false });
+                let song_length_paragraph = Paragraph::new(song_length_string)
+                    .right_aligned()
+                    .wrap(Wrap { trim: false });
+
+                let progress_float: f64 = now_playing.progress as f64;
+                let song_length_float: f64 = now_playing.song_length as f64;
+                let percent: u16 = ((progress_float / song_length_float) * 100.0) as u16;
+
+                let progress_bar_gauge = Gauge::default()
+                    .percent(percent)
+                    .label("")
+                    .gauge_style(Style::default().fg(Color::Green));
 
                 let chuncks = Layout::default()
-                    .margin(5)
+                    .margin(3)
                     .constraints(vec![
                         Constraint::Min(1),
                         Constraint::Min(1),
                         Constraint::Min(1),
+                        Constraint::Min(3),
+                        Constraint::Max(1),
                     ])
                     .split(frame.area());
+
+                let progress_bar_chunks = Layout::default()
+                    .direction(Direction::Horizontal)
+                    .constraints(vec![
+                        Constraint::Percentage(10),
+                        Constraint::Percentage(80),
+                        Constraint::Percentage(10),
+                    ])
+                    .split(chuncks[4]);
 
                 frame.render_widget(song_paragraph, chuncks[0]);
                 frame.render_widget(artist_paragraph, chuncks[1]);
                 frame.render_widget(album_paragrah, chuncks[2]);
+                frame.render_widget(progress_paragraph, progress_bar_chunks[0]);
+                frame.render_widget(progress_bar_gauge, progress_bar_chunks[1]);
+                frame.render_widget(song_length_paragraph, progress_bar_chunks[2]);
             }
         }
     }

@@ -8,7 +8,7 @@ use std::{
 use async_recursion::async_recursion;
 use base64::{engine::general_purpose, Engine};
 use color_eyre::eyre::eyre;
-use log::{debug, error};
+use log::error;
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -28,6 +28,26 @@ pub struct NowPlaying {
     pub song: String,
     pub artists: Vec<String>,
     pub album: String,
+    pub song_length: u64,
+    pub progress: u64,
+}
+
+impl NowPlaying {
+    pub fn get_song_length_string(&self) -> String {
+        Self::milliseconds_to_string(self.song_length)
+    }
+
+    pub fn get_progress_string(&self) -> String {
+        Self::milliseconds_to_string(self.progress)
+    }
+
+    fn milliseconds_to_string(ms: u64) -> String {
+        let total_seconds = ms / 1_000;
+        let minutes = total_seconds / 60;
+        let seconds = total_seconds % 60;
+
+        format!("{}:{:02}", minutes, seconds)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -527,6 +547,8 @@ impl SpotifyClient {
         let mut song_string = String::new();
         let mut album_string = String::new();
         let mut artists_vec = Vec::<String>::new();
+        let mut song_length_num: u64 = 0;
+        let mut progress_num: u64 = 0;
 
         if let Some(item) = json.get("item") {
             if let Some(song) = item.get("name") {
@@ -562,12 +584,36 @@ impl SpotifyClient {
                     _ => {}
                 }
             }
+
+            if let Some(song_length) = item.get("duration_ms") {
+                match song_length {
+                    Value::Number(song_length) => {
+                        if let Some(song_length) = song_length.to_owned().as_u64() {
+                            song_length_num = song_length;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        if let Some(progress) = json.get("progress_ms") {
+            match progress {
+                Value::Number(progress) => {
+                    if let Some(progress) = progress.to_owned().as_u64() {
+                        progress_num = progress;
+                    }
+                }
+                _ => {}
+            }
         }
 
         self.now_playing = Some(NowPlaying {
             song: song_string,
             artists: artists_vec,
             album: album_string,
+            song_length: song_length_num,
+            progress: progress_num,
         });
 
         Ok(self.to_owned())
