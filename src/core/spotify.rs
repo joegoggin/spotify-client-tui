@@ -8,7 +8,7 @@ use std::{
 use async_recursion::async_recursion;
 use base64::{engine::general_purpose, Engine};
 use color_eyre::eyre::eyre;
-use log::error;
+use log::{debug, error};
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -24,11 +24,19 @@ pub struct Credentials {
 }
 
 #[derive(Debug, Clone)]
+pub struct NowPlaying {
+    pub song: String,
+    pub artists: Vec<String>,
+    pub album: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct SpotifyClient {
     pub config: Config,
     pub credentials: Option<Credentials>,
     pub code: Option<String>,
     pub auth_url: String,
+    pub now_playing: Option<NowPlaying>,
     http_client: Client,
 }
 
@@ -92,6 +100,7 @@ impl SpotifyClient {
             credentials,
             code: None,
             auth_url: url.to_string(),
+            now_playing: None,
             http_client: Client::new(),
         })
     }
@@ -488,6 +497,80 @@ impl SpotifyClient {
         }
 
         Ok(())
+    }
+
+    #[async_recursion]
+    pub async fn refresh_now_playing(&mut self) -> AppResult<Self> {
+        let auth_header = Self::get_auth_header(self)?;
+
+        let response = self
+            .http_client
+            .get("https://api.spotify.com/v1/me/player")
+            .header("Authorization", auth_header)
+            .send()
+            .await?;
+
+        let status = response.status();
+
+        if status == 204 {
+            self.now_playing = None;
+        }
+
+        if status == 401 {
+            self.refresh().await?;
+
+            return self.refresh_now_playing().await;
+        }
+
+        let json = response.json::<Value>().await?;
+
+        let mut song_string = String::new();
+        let mut album_string = String::new();
+        let mut artists_vec = Vec::<String>::new();
+
+        if let Some(item) = json.get("item") {
+            if let Some(song) = item.get("name") {
+                match song {
+                    Value::String(song) => song_string = song.to_owned(),
+                    _ => {}
+                }
+            }
+
+            if let Some(album) = item.get("album") {
+                if let Some(album_name) = album.get("name") {
+                    match album_name {
+                        Value::String(album_name) => album_string = album_name.to_owned(),
+                        _ => {}
+                    }
+                }
+            }
+
+            if let Some(artists) = item.get("artists") {
+                match artists {
+                    Value::Array(artists) => {
+                        for artist in artists {
+                            if let Some(artist_name) = artist.get("name") {
+                                match artist_name {
+                                    Value::String(artist_name) => {
+                                        artists_vec.push(artist_name.to_owned())
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        self.now_playing = Some(NowPlaying {
+            song: song_string,
+            artists: artists_vec,
+            album: album_string,
+        });
+
+        Ok(self.to_owned())
     }
 
     fn get_auth_header(&self) -> AppResult<String> {

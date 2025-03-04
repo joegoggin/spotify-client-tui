@@ -1,5 +1,11 @@
 use log::debug;
-use ratatui::{crossterm::event::KeyEvent, style::Color, Frame};
+use ratatui::{
+    crossterm::event::KeyEvent,
+    layout::{Constraint, Layout},
+    style::Color,
+    widgets::{Paragraph, Wrap},
+    Frame,
+};
 
 use crate::{
     components::{screen_block::ScreenBlock, Component},
@@ -30,6 +36,45 @@ impl Screen for NowPlayingScreen {
 impl Component for NowPlayingScreen {
     fn view(&mut self, app: &App, frame: &mut Frame) {
         ScreenBlock::new_with_color("Now Playing", Color::Green).view(app, frame);
+
+        if let Some(spotify_client) = app.spotify_client.clone() {
+            if let Some(now_playing) = spotify_client.now_playing {
+                let song_string = format!("Song: {}", now_playing.song);
+                let mut artist_string = "Artists: ".to_string();
+                let album_string = format!("Album: {}", now_playing.album);
+
+                for (index, value) in now_playing.artists.iter().enumerate() {
+                    if index == now_playing.artists.len() - 1 {
+                        artist_string = artist_string + &format!("{}", value);
+                    } else {
+                        artist_string = artist_string + &format!("{}, ", value);
+                    }
+                }
+
+                let song_paragraph = Paragraph::new(song_string)
+                    .centered()
+                    .wrap(Wrap { trim: false });
+                let artist_paragraph = Paragraph::new(artist_string)
+                    .centered()
+                    .wrap(Wrap { trim: false });
+                let album_paragrah = Paragraph::new(album_string)
+                    .centered()
+                    .wrap(Wrap { trim: false });
+
+                let chuncks = Layout::default()
+                    .margin(5)
+                    .constraints(vec![
+                        Constraint::Min(1),
+                        Constraint::Min(1),
+                        Constraint::Min(1),
+                    ])
+                    .split(frame.area());
+
+                frame.render_widget(song_paragraph, chuncks[0]);
+                frame.render_widget(artist_paragraph, chuncks[1]);
+                frame.render_widget(album_paragrah, chuncks[2]);
+            }
+        }
     }
 
     fn tick(&mut self, app: &mut App) -> AppResult<Option<Message>> {
@@ -41,7 +86,7 @@ impl Component for NowPlayingScreen {
                     return Ok(Some(Message::ChangeScreen { new_screen }));
                 }
 
-                Ok(None)
+                return Ok(Some(Message::RefreshNowPlaying));
             }
             None => {
                 let config = Config::new()?;

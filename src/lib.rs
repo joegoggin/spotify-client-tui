@@ -27,6 +27,7 @@ pub enum Message {
     GoToPrevScreen,
     GoToNextScreen,
     ListenForAuthCode,
+    RefreshNowPlaying,
     SetAuthCode { code: String },
 }
 
@@ -162,6 +163,11 @@ pub async fn run() -> AppResult<()> {
                             current_message = Some(Message::ChangeScreen { new_screen });
                             continue;
                         }
+                    }
+                }
+                Message::RefreshNowPlaying => {
+                    if let Some(mut spotify_client) = app.spotify_client.clone() {
+                        app.spotify_client = Some(spotify_client.refresh_now_playing().await?);
                     }
                 }
                 _ => {}
