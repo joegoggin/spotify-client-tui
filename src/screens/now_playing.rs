@@ -1,6 +1,5 @@
-use log::debug;
 use ratatui::{
-    crossterm::event::KeyEvent,
+    crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Direction, Layout},
     style::{Color, Style},
     widgets::{Gauge, Paragraph, Wrap},
@@ -15,6 +14,8 @@ use crate::{
 
 use super::{
     auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
+    queue::QueueScreen,
+    search::SearchScreen,
     Screen, ScreenType,
 };
 
@@ -44,6 +45,7 @@ impl Component for NowPlayingScreen {
                 let album_string = format!("Album: {}", now_playing.album);
                 let progress_string = now_playing.get_progress_string();
                 let song_length_string = now_playing.get_song_length_string();
+                let shuffle_string = now_playing.get_shuffle_string();
 
                 for (index, value) in now_playing.artists.iter().enumerate() {
                     if index == now_playing.artists.len() - 1 {
@@ -68,6 +70,9 @@ impl Component for NowPlayingScreen {
                 let song_length_paragraph = Paragraph::new(song_length_string)
                     .right_aligned()
                     .wrap(Wrap { trim: false });
+                let shuffle_paragraph = Paragraph::new(shuffle_string)
+                    .centered()
+                    .wrap(Wrap { trim: false });
 
                 let progress_float: f64 = now_playing.progress as f64;
                 let song_length_float: f64 = now_playing.song_length as f64;
@@ -85,6 +90,8 @@ impl Component for NowPlayingScreen {
                         Constraint::Min(1),
                         Constraint::Min(1),
                         Constraint::Min(3),
+                        Constraint::Max(1),
+                        Constraint::Max(1),
                         Constraint::Max(1),
                     ])
                     .split(frame.area());
@@ -104,6 +111,7 @@ impl Component for NowPlayingScreen {
                 frame.render_widget(progress_paragraph, progress_bar_chunks[0]);
                 frame.render_widget(progress_bar_gauge, progress_bar_chunks[1]);
                 frame.render_widget(song_length_paragraph, progress_bar_chunks[2]);
+                frame.render_widget(shuffle_paragraph, chuncks[6]);
             }
         }
     }
@@ -140,7 +148,18 @@ impl Component for NowPlayingScreen {
     }
 
     fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
-        debug!("{:#?}", key);
-        Ok(None)
+        match key.code {
+            KeyCode::Char(' ') => Ok(Some(Message::PausePlay)),
+            KeyCode::Char('s') => Ok(Some(Message::Shuffle)),
+            KeyCode::Char('l') => Ok(Some(Message::NextSong)),
+            KeyCode::Char('h') => Ok(Some(Message::PrevSong)),
+            KeyCode::Char('q') => Ok(Some(Message::ChangeScreen {
+                new_screen: Box::new(QueueScreen::default()),
+            })),
+            KeyCode::Char('/') => Ok(Some(Message::ChangeScreen {
+                new_screen: Box::new(SearchScreen::default()),
+            })),
+            _ => Ok(None),
+        }
     }
 }

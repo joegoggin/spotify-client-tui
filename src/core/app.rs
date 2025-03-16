@@ -32,7 +32,7 @@ impl App {
             match key.code {
                 KeyCode::Char('H') => return Ok(Some(Message::GoToPrevScreen)),
                 KeyCode::Char('L') => return Ok(Some(Message::GoToNextScreen)),
-                KeyCode::Char('q') => {
+                KeyCode::Esc => {
                     return Ok(Some(Message::ChangeScreen {
                         new_screen: Box::new(ExitScreen::default()),
                     }))
