@@ -40,48 +40,50 @@ impl Log for Logger {
                 None => "".to_string(),
             };
 
-            match record.level() {
-                Level::Info => writeln!(file, "\n{}{}{}", blue, record.args(), clear).unwrap(),
-                Level::Error => writeln!(
-                    file,
-                    "\n{}File: {}{}\n{}Line Number: {}{}\n{}Error: {}{}",
-                    purple,
-                    clear,
-                    file_path,
-                    purple,
-                    clear,
-                    line_number,
-                    red,
-                    record.args(),
-                    clear
-                )
-                .unwrap(),
-                Level::Debug => writeln!(
-                    file,
-                    "\n{}File: {}{}\n{}Line Number: {}{}\n{}{}{}",
-                    purple,
-                    clear,
-                    file_path,
-                    purple,
-                    clear,
-                    line_number,
-                    yellow,
-                    record.args(),
-                    clear,
-                )
-                .unwrap(),
-                _ => writeln!(
-                    file,
-                    "\n{}File: {}{}\n{}Line Number: {}{}\n{}",
-                    purple,
-                    clear,
-                    file_path,
-                    purple,
-                    clear,
-                    line_number,
-                    record.args(),
-                )
-                .unwrap(),
+            if !record.file().unwrap_or("").contains("crates.io") {
+                match record.level() {
+                    Level::Info => writeln!(file, "\n{}{}{}", blue, record.args(), clear).unwrap(),
+                    Level::Error => writeln!(
+                        file,
+                        "\n{}File: {}{}\n{}Line Number: {}{}\n{}Error: {}{}",
+                        purple,
+                        clear,
+                        file_path,
+                        purple,
+                        clear,
+                        line_number,
+                        red,
+                        record.args(),
+                        clear
+                    )
+                    .unwrap(),
+                    Level::Debug => writeln!(
+                        file,
+                        "\n{}File: {}{}\n{}Line Number: {}{}\n{}{}{}",
+                        purple,
+                        clear,
+                        file_path,
+                        purple,
+                        clear,
+                        line_number,
+                        yellow,
+                        record.args(),
+                        clear,
+                    )
+                    .unwrap(),
+                    _ => writeln!(
+                        file,
+                        "\n{}File: {}{}\n{}Line Number: {}{}\n{}",
+                        purple,
+                        clear,
+                        file_path,
+                        purple,
+                        clear,
+                        line_number,
+                        record.args(),
+                    )
+                    .unwrap(),
+                }
             }
             file.flush().unwrap();
         }

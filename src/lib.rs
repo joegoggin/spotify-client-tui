@@ -27,7 +27,12 @@ pub enum Message {
     GoToPrevScreen,
     GoToNextScreen,
     ListenForAuthCode,
+    RefreshNowPlaying,
     SetAuthCode { code: String },
+    PausePlay,
+    Shuffle,
+    NextSong,
+    PrevSong,
 }
 
 fn is_control_command(args: &Args) -> bool {
@@ -162,6 +167,31 @@ pub async fn run() -> AppResult<()> {
                             current_message = Some(Message::ChangeScreen { new_screen });
                             continue;
                         }
+                    }
+                }
+                Message::RefreshNowPlaying => {
+                    if let Some(mut spotify_client) = app.spotify_client.clone() {
+                        app.spotify_client = Some(spotify_client.refresh_now_playing().await?);
+                    }
+                }
+                Message::PausePlay => {
+                    if let Some(mut spotify_client) = app.spotify_client.clone() {
+                        spotify_client.toggle_pause_play().await?;
+                    }
+                }
+                Message::Shuffle => {
+                    if let Some(mut spotify_client) = app.spotify_client.clone() {
+                        spotify_client.toggle_shuffle().await?;
+                    }
+                }
+                Message::NextSong => {
+                    if let Some(mut spotify_client) = app.spotify_client.clone() {
+                        spotify_client.next_song().await?;
+                    }
+                }
+                Message::PrevSong => {
+                    if let Some(mut spotify_client) = app.spotify_client.clone() {
+                        spotify_client.previous_song().await?;
                     }
                 }
                 _ => {}
