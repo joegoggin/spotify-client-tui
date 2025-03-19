@@ -5,7 +5,7 @@ use crate::{
     AppResult, Message,
 };
 
-use super::spotify::SpotifyClient;
+use super::spotify::client::SpotifyClient;
 
 #[derive(Clone)]
 pub struct App {

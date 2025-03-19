@@ -6,7 +6,7 @@ use ratatui::{
 
 use crate::{
     components::{menu::Menu, screen_block::ScreenBlock, Component},
-    core::{app::App, config::Config, spotify::SpotifyClient},
+    core::{app::App, config::Config, spotify::client::SpotifyClient},
     utils::vec::ToStringVec,
     AppResult, Message,
 };

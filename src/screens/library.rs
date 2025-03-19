@@ -3,7 +3,7 @@ use ratatui::{crossterm::event::KeyEvent, style::Color, Frame};
 
 use crate::{
     components::{screen_block::ScreenBlock, Component},
-    core::{app::App, config::Config, spotify::SpotifyClient},
+    core::{app::App, config::Config, spotify::client::SpotifyClient},
     AppResult, Message,
 };
 
