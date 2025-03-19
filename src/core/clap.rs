@@ -11,9 +11,9 @@ pub struct Args {
 #[derive(Subcommand, Debug, Clone)]
 pub enum Command {
     /// Control Spotify with terminal commands
-    Control {
+    Player {
         #[command(subcommand)]
-        control_command: ControlCommand,
+        player_command: PlayerCommand,
     },
     /// Display information about song that is currently playing and control Pause/Play, Skip Song,
     /// Previous Song, and Shuffle
@@ -31,7 +31,7 @@ pub enum Command {
 }
 
 #[derive(Subcommand, Debug, Clone)]
-pub enum ControlCommand {
+pub enum PlayerCommand {
     /// Toggle Pause And Play
     PausePlay,
     /// Play To Next Song

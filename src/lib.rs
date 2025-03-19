@@ -2,7 +2,7 @@ use auth::server::AuthServer;
 use clap::Parser;
 use core::{
     app::App,
-    clap::{Args, Command, ControlCommand},
+    clap::{Args, Command, PlayerCommand},
     config::Config,
     logging::setup_logging,
     spotify::{client::SpotifyClient, player::SpotifyPlayer},
@@ -35,10 +35,10 @@ pub enum Message {
     PrevSong,
 }
 
-fn is_control_command(args: &Args) -> bool {
+fn is_player_command(args: &Args) -> bool {
     if let Some(command) = args.command.clone() {
         match command {
-            Command::Control { .. } => return true,
+            Command::Player { .. } => return true,
             _ => {}
         }
     }
@@ -48,27 +48,27 @@ fn is_control_command(args: &Args) -> bool {
 async fn handle_control_command(args: &Args, app: &App) -> AppResult<bool> {
     if let Some(command) = args.command.clone() {
         match command {
-            Command::Control { control_command } => {
+            Command::Player { player_command } => {
                 if let Some(spotify_client) = app.spotify_client.clone() {
                     let mut player = SpotifyPlayer::new(spotify_client.clone());
 
-                    match control_command {
-                        ControlCommand::PausePlay => {
+                    match player_command {
+                        PlayerCommand::PausePlay => {
                             player.toggle_pause_play().await?;
                         }
-                        ControlCommand::NextSong => {
+                        PlayerCommand::NextSong => {
                             player.next_song().await?;
                         }
-                        ControlCommand::PreviousSong => {
+                        PlayerCommand::PreviousSong => {
                             player.previous_song().await?;
                         }
-                        ControlCommand::Shuffle => {
+                        PlayerCommand::Shuffle => {
                             player.toggle_shuffle().await?;
                         }
-                        ControlCommand::Devices => {
+                        PlayerCommand::Devices => {
                             player.list_devices().await?;
                         }
-                        ControlCommand::Device { id } => {
+                        PlayerCommand::Device { id } => {
                             player.set_device(id).await?;
                         }
                     }
@@ -100,7 +100,7 @@ pub async fn run() -> AppResult<()> {
     } else {
         app.spotify_client = Some(SpotifyClient::new(config)?);
 
-        if is_control_command(&args) {
+        if is_player_command(&args) {
             handle_control_command(&args, &app).await?;
             return Ok(());
         }
@@ -128,7 +128,7 @@ pub async fn run() -> AppResult<()> {
                         }
                     }
 
-                    if new_screen.get_screen_type() == ScreenType::Home && is_control_command(&args)
+                    if new_screen.get_screen_type() == ScreenType::Home && is_player_command(&args)
                     {
                         app.is_running = false;
                         handle_control_command(&args, &app).await?;
