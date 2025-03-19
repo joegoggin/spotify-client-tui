@@ -11,11 +11,9 @@ use color_eyre::eyre::eyre;
 use log::error;
 use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::Value;
 
-use crate::{utils::directory::get_home_dir, AppResult};
-
-use super::config::Config;
+use crate::{core::config::Config, utils::directory::get_home_dir, AppResult};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Credentials {
@@ -65,7 +63,7 @@ pub struct SpotifyClient {
     pub code: Option<String>,
     pub auth_url: String,
     pub now_playing: Option<NowPlaying>,
-    http_client: Client,
+    pub http_client: Client,
 }
 
 impl SpotifyClient {
@@ -213,7 +211,7 @@ impl SpotifyClient {
         Ok(())
     }
 
-    pub async fn refresh(&mut self) -> AppResult<()> {
+    pub async fn refresh_auth_token(&mut self) -> AppResult<()> {
         if let Some(credentials) = self.credentials.clone() {
             if let Some(client_id) = self.config.client_id.clone() {
                 if let Some(client_secret) = self.config.client_secret.clone() {
@@ -274,260 +272,6 @@ impl SpotifyClient {
     }
 
     #[async_recursion]
-    pub async fn is_playing(&mut self) -> AppResult<bool> {
-        let auth_header = self.get_auth_header()?;
-
-        let response = self
-            .http_client
-            .get("https://api.spotify.com/v1/me/player")
-            .header("Authorization", auth_header.clone())
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        if status == 204 {
-            let error_message = "No Spotify device active.";
-
-            error!("{}", error_message);
-            return Err(eyre!(error_message));
-        }
-
-        if status == 401 {
-            self.refresh().await?;
-
-            return self.is_playing().await;
-        }
-
-        if status == 200 {
-            let response_json = response.json::<Value>().await?;
-
-            if let Some(is_playing) = response_json.get("is_playing") {
-                if let Value::Bool(is_playing) = is_playing {
-                    return Ok(is_playing.to_owned());
-                }
-            }
-        }
-
-        Ok(false)
-    }
-
-    #[async_recursion]
-    pub async fn toggle_pause_play(&mut self) -> AppResult<()> {
-        let auth_header = self.get_auth_header()?;
-
-        if self.is_playing().await? {
-            let response = self
-                .http_client
-                .put("https://api.spotify.com/v1/me/player/pause")
-                .header("Authorization", auth_header)
-                .header("Content-Length", 0)
-                .send()
-                .await?;
-
-            let status = response.status();
-
-            if status == 401 {
-                self.refresh().await?;
-
-                return self.toggle_pause_play().await;
-            }
-        } else {
-            let response = self
-                .http_client
-                .put("https://api.spotify.com/v1/me/player/play")
-                .header("Authorization", auth_header)
-                .header("Content-Length", 0)
-                .send()
-                .await?;
-
-            let status = response.status();
-
-            if status == 401 {
-                self.refresh().await?;
-
-                return self.toggle_pause_play().await;
-            }
-        }
-
-        Ok(())
-    }
-
-    #[async_recursion]
-    pub async fn next_song(&mut self) -> AppResult<()> {
-        let auth_header = self.get_auth_header()?;
-
-        let response = self
-            .http_client
-            .post("https://api.spotify.com/v1/me/player/next")
-            .header("Authorization", auth_header)
-            .header("Content-Length", 0)
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        if status == 401 {
-            self.refresh().await?;
-
-            return self.next_song().await;
-        }
-
-        Ok(())
-    }
-
-    #[async_recursion]
-    pub async fn previous_song(&mut self) -> AppResult<()> {
-        let auth_header = self.get_auth_header()?;
-
-        let response = self
-            .http_client
-            .post("https://api.spotify.com/v1/me/player/previous")
-            .header("Authorization", auth_header)
-            .header("Content-Length", 0)
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        if status == 401 {
-            self.refresh().await?;
-
-            return self.previous_song().await;
-        }
-
-        Ok(())
-    }
-
-    #[async_recursion]
-    pub async fn toggle_shuffle(&mut self) -> AppResult<()> {
-        let auth_header = self.get_auth_header()?;
-
-        let response = self
-            .http_client
-            .get("https://api.spotify.com/v1/me/player")
-            .header("Authorization", auth_header.clone())
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        if status == 401 {
-            self.refresh().await?;
-
-            return self.toggle_shuffle().await;
-        }
-
-        if status == 200 {
-            let response_json = response.json::<Value>().await?;
-
-            if let Some(current_shuffle_state) = response_json.get("shuffle_state") {
-                if let Value::Bool(current_shuffle_state) = current_shuffle_state {
-                    let shuffle_state = !current_shuffle_state;
-
-                    let url = format!(
-                        "https://api.spotify.com/v1/me/player/shuffle?state={}",
-                        shuffle_state.to_string()
-                    );
-
-                    let response = self
-                        .http_client
-                        .put(url)
-                        .header("Content-Type", "application/x-www-form-urlencoded")
-                        .header("Authorization", auth_header)
-                        .header("Content-Length", 0)
-                        .send()
-                        .await?;
-
-                    let status = response.status();
-
-                    if status == 401 {
-                        self.refresh().await?;
-
-                        return self.toggle_shuffle().await;
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    #[async_recursion]
-    pub async fn list_devices(&mut self) -> AppResult<()> {
-        let auth_header = self.get_auth_header()?;
-
-        let response = self
-            .http_client
-            .get("https://api.spotify.com/v1/me/player/devices")
-            .header("Authorization", auth_header)
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        if status == 401 {
-            self.refresh().await?;
-
-            return self.list_devices().await;
-        }
-
-        if status == 200 {
-            let response_json = response.json::<Value>().await?;
-
-            if let Some(devices) = response_json.get("devices") {
-                if let Value::Array(devices) = devices {
-                    for device in devices {
-                        if let Some(id) = device.get("id") {
-                            if let Value::String(id) = id {
-                                println!("id: {}", id);
-                            }
-                        }
-
-                        if let Some(name) = device.get("name") {
-                            if let Value::String(name) = name {
-                                println!("name: {}", name);
-                            }
-                        }
-
-                        println!();
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    #[async_recursion]
-    pub async fn set_device(&mut self, device_id: String) -> AppResult<()> {
-        let auth_header = Self::get_auth_header(self)?;
-
-        let body = json!({
-            "device_ids": [&device_id],
-            "play": true,
-        });
-
-        let response = self
-            .http_client
-            .put("https://api.spotify.com/v1/me/player")
-            .header("Authorization", auth_header)
-            .json(&body)
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        if status == 401 {
-            self.refresh().await?;
-
-            return self.set_device(device_id).await;
-        }
-
-        Ok(())
-    }
-
-    #[async_recursion]
     pub async fn refresh_now_playing(&mut self) -> AppResult<Self> {
         let auth_header = Self::get_auth_header(self)?;
 
@@ -545,7 +289,7 @@ impl SpotifyClient {
         }
 
         if status == 401 {
-            self.refresh().await?;
+            self.refresh_auth_token().await?;
 
             return self.refresh_now_playing().await;
         }
@@ -638,7 +382,7 @@ impl SpotifyClient {
         Ok(self.to_owned())
     }
 
-    fn get_auth_header(&self) -> AppResult<String> {
+    pub fn get_auth_header(&self) -> AppResult<String> {
         match self.credentials.clone() {
             Some(credentials) => Ok(format!("Bearer {}", credentials.access_token)),
             None => {

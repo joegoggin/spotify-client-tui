@@ -5,7 +5,7 @@ use core::{
     clap::{Args, Command, ControlCommand},
     config::Config,
     logging::setup_logging,
-    spotify::SpotifyClient,
+    spotify::{client::SpotifyClient, player::SpotifyPlayer},
     tui::{init_terminal, install_panic_hook, restore_terminal},
 };
 use screens::{auth::create_config::CreateConfigFormScreen, home::HomeScreen, Screen, ScreenType};
@@ -49,25 +49,27 @@ async fn handle_control_command(args: &Args, app: &App) -> AppResult<bool> {
     if let Some(command) = args.command.clone() {
         match command {
             Command::Control { control_command } => {
-                if let Some(mut spotify_client) = app.spotify_client.clone() {
+                if let Some(spotify_client) = app.spotify_client.clone() {
+                    let mut player = SpotifyPlayer::new(spotify_client.clone());
+
                     match control_command {
                         ControlCommand::PausePlay => {
-                            spotify_client.toggle_pause_play().await?;
+                            player.toggle_pause_play().await?;
                         }
                         ControlCommand::NextSong => {
-                            spotify_client.next_song().await?;
+                            player.next_song().await?;
                         }
                         ControlCommand::PreviousSong => {
-                            spotify_client.previous_song().await?;
+                            player.previous_song().await?;
                         }
                         ControlCommand::Shuffle => {
-                            spotify_client.toggle_shuffle().await?;
+                            player.toggle_shuffle().await?;
                         }
                         ControlCommand::Devices => {
-                            spotify_client.list_devices().await?;
+                            player.list_devices().await?;
                         }
                         ControlCommand::Device { id } => {
-                            spotify_client.set_device(id).await?;
+                            player.set_device(id).await?;
                         }
                     }
                 }
@@ -175,23 +177,31 @@ pub async fn run() -> AppResult<()> {
                     }
                 }
                 Message::PausePlay => {
-                    if let Some(mut spotify_client) = app.spotify_client.clone() {
-                        spotify_client.toggle_pause_play().await?;
+                    if let Some(spotify_client) = app.spotify_client.clone() {
+                        let mut player = SpotifyPlayer::new(spotify_client);
+
+                        player.toggle_pause_play().await?;
                     }
                 }
                 Message::Shuffle => {
-                    if let Some(mut spotify_client) = app.spotify_client.clone() {
-                        spotify_client.toggle_shuffle().await?;
+                    if let Some(spotify_client) = app.spotify_client.clone() {
+                        let mut player = SpotifyPlayer::new(spotify_client);
+
+                        player.toggle_shuffle().await?;
                     }
                 }
                 Message::NextSong => {
-                    if let Some(mut spotify_client) = app.spotify_client.clone() {
-                        spotify_client.next_song().await?;
+                    if let Some(spotify_client) = app.spotify_client.clone() {
+                        let mut player = SpotifyPlayer::new(spotify_client);
+
+                        player.next_song().await?;
                     }
                 }
                 Message::PrevSong => {
-                    if let Some(mut spotify_client) = app.spotify_client.clone() {
-                        spotify_client.previous_song().await?;
+                    if let Some(spotify_client) = app.spotify_client.clone() {
+                        let mut player = SpotifyPlayer::new(spotify_client);
+
+                        player.previous_song().await?;
                     }
                 }
                 _ => {}
