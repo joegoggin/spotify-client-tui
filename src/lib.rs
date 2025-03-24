@@ -5,7 +5,7 @@ use core::{
     clap::{Args, Command, PlayerCommand},
     config::Config,
     logging::setup_logging,
-    spotify::{client::SpotifyClient, player::SpotifyPlayer},
+    spotify::{client::SpotifyClient, now_playing::NowPlaying, player::SpotifyPlayer},
     tui::{init_terminal, install_panic_hook, restore_terminal},
 };
 use screens::{auth::create_config::CreateConfigFormScreen, home::HomeScreen, Screen, ScreenType};
@@ -173,7 +173,17 @@ pub async fn run() -> AppResult<()> {
                 }
                 Message::RefreshNowPlaying => {
                     if let Some(mut spotify_client) = app.spotify_client.clone() {
-                        app.spotify_client = Some(spotify_client.refresh_now_playing().await?);
+                        match current_screen.get_now_playing() {
+                            Some(now_playing) => {
+                                now_playing.refresh(&mut spotify_client).await?;
+                            }
+                            None => {
+                                let mut now_playing = NowPlaying::default();
+
+                                now_playing.refresh(&mut spotify_client).await?;
+                                current_screen.set_now_playing(Some(now_playing))?;
+                            }
+                        }
                     }
                 }
                 Message::PausePlay => {

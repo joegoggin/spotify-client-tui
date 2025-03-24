@@ -1,9 +1,14 @@
 use std::time::Duration;
 
 use clap::ValueEnum;
+use color_eyre::eyre::eyre;
 use ratatui::crossterm::event::{self, Event};
 
-use crate::{components::Component, core::app::App, AppResult, Message};
+use crate::{
+    components::Component,
+    core::{app::App, spotify::now_playing::NowPlaying},
+    AppResult, Message,
+};
 
 #[derive(ValueEnum, PartialEq, Debug, Clone)]
 pub enum ScreenType {
@@ -45,6 +50,14 @@ pub trait Screen: ScreenClone + Component {
         }
 
         Ok(None)
+    }
+
+    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
+        None
+    }
+
+    fn set_now_playing(&mut self, _: Option<NowPlaying>) -> AppResult<()> {
+        Err(eyre!("Error: now playing doesn't exist on this screen."))
     }
 }
 

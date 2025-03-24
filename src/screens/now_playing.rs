@@ -8,7 +8,12 @@ use ratatui::{
 
 use crate::{
     components::{screen_block::ScreenBlock, Component},
-    core::{app::App, config::Config, spotify::client::SpotifyClient},
+    core::{
+        app::App,
+        config::Config,
+        spotify::{client::SpotifyClient, now_playing::NowPlaying},
+    },
+    layout::rect::get_centered_rect,
     AppResult, Message,
 };
 
@@ -20,11 +25,13 @@ use super::{
 };
 
 #[derive(Clone)]
-pub struct NowPlayingScreen;
+pub struct NowPlayingScreen {
+    now_playing: Option<NowPlaying>,
+}
 
 impl Default for NowPlayingScreen {
     fn default() -> Self {
-        Self
+        Self { now_playing: None }
     }
 }
 
@@ -32,14 +39,24 @@ impl Screen for NowPlayingScreen {
     fn get_screen_type(&self) -> ScreenType {
         ScreenType::NowPlayingScreen
     }
+
+    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
+        self.now_playing.as_mut()
+    }
+
+    fn set_now_playing(&mut self, now_playing: Option<NowPlaying>) -> AppResult<()> {
+        self.now_playing = now_playing;
+
+        Ok(())
+    }
 }
 
 impl Component for NowPlayingScreen {
     fn view(&mut self, app: &App, frame: &mut Frame) {
         ScreenBlock::new_with_color("Now Playing", Color::Green).view(app, frame);
 
-        if let Some(spotify_client) = app.spotify_client.clone() {
-            if let Some(now_playing) = spotify_client.now_playing {
+        match self.now_playing.clone() {
+            Some(now_playing) => {
                 let song_string = format!("Song: {}", now_playing.song);
                 let mut artist_string = "Artists: ".to_string();
                 let album_string = format!("Album: {}", now_playing.album);
@@ -112,6 +129,14 @@ impl Component for NowPlayingScreen {
                 frame.render_widget(progress_bar_gauge, progress_bar_chunks[1]);
                 frame.render_widget(song_length_paragraph, progress_bar_chunks[2]);
                 frame.render_widget(shuffle_paragraph, chuncks[6]);
+            }
+            None => {
+                let paragraph = Paragraph::new("Now playing data not available")
+                    .centered()
+                    .wrap(Wrap { trim: false });
+                let area = get_centered_rect(70, 50, frame.area());
+
+                frame.render_widget(paragraph, area);
             }
         }
     }
