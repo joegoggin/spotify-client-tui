@@ -55,10 +55,6 @@ pub trait Screen: ScreenClone + Component {
     fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
         None
     }
-
-    fn set_now_playing(&mut self, _: Option<NowPlaying>) -> AppResult<()> {
-        Err(eyre!("Error: now playing doesn't exist on this screen."))
-    }
 }
 
 pub trait ScreenClone {

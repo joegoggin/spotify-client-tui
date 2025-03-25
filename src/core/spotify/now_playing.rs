@@ -154,6 +154,14 @@ impl NowPlaying {
         Ok(())
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.song == "".to_string()
+            && self.artists.is_empty()
+            && self.album == "".to_string()
+            && self.song_length == 0
+            && self.progress == 0
+    }
+
     fn milliseconds_to_string(ms: u64) -> String {
         let total_seconds = ms / 1_000;
         let minutes = total_seconds / 60;

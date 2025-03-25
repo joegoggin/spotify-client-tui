@@ -173,16 +173,8 @@ pub async fn run() -> AppResult<()> {
                 }
                 Message::RefreshNowPlaying => {
                     if let Some(mut spotify_client) = app.spotify_client.clone() {
-                        match current_screen.get_now_playing() {
-                            Some(now_playing) => {
-                                now_playing.refresh(&mut spotify_client).await?;
-                            }
-                            None => {
-                                let mut now_playing = NowPlaying::default();
-
-                                now_playing.refresh(&mut spotify_client).await?;
-                                current_screen.set_now_playing(Some(now_playing))?;
-                            }
+                        if let Some(now_playing) = current_screen.get_now_playing() {
+                            now_playing.refresh(&mut spotify_client).await?;
                         }
                     }
                 }
