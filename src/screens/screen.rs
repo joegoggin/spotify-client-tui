@@ -1,7 +1,6 @@
 use std::time::Duration;
 
 use clap::ValueEnum;
-use color_eyre::eyre::eyre;
 use ratatui::crossterm::event::{self, Event};
 
 use crate::{

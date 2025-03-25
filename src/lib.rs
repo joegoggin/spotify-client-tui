@@ -5,7 +5,7 @@ use core::{
     clap::{Args, Command, PlayerCommand},
     config::Config,
     logging::setup_logging,
-    spotify::{client::SpotifyClient, now_playing::NowPlaying, player::SpotifyPlayer},
+    spotify::{client::SpotifyClient, player::SpotifyPlayer},
     tui::{init_terminal, install_panic_hook, restore_terminal},
 };
 use screens::{auth::create_config::CreateConfigFormScreen, home::HomeScreen, Screen, ScreenType};
