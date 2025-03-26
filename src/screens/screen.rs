@@ -22,6 +22,7 @@ pub enum ScreenType {
     QueueScreen,
     SearchScreen,
     LibraryScreen,
+    ErrorScreen,
 }
 
 pub trait Screen: ScreenClone + Component {

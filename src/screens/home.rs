@@ -13,6 +13,7 @@ use crate::{
 
 use super::{
     auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
+    error::ErrorScreen,
     library::LibraryScreen,
     now_playing::NowPlayingScreen,
     queue::QueueScreen,
@@ -114,6 +115,9 @@ impl Component for HomeScreen {
                 })),
                 _ => Ok(None),
             },
+            KeyCode::Char('e') => Ok(Some(Message::ChangeScreen {
+                new_screen: Box::new(ErrorScreen::default()),
+            })),
             _ => Ok(None),
         }
     }

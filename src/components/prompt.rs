@@ -38,7 +38,7 @@ impl Prompt {
 
 impl Component for Prompt {
     fn view(&mut self, _: &App, frame: &mut Frame) {
-        let container_area = get_centered_rect(70, 50, frame.area());
+        let container_area = get_centered_rect(70, 60, frame.area());
         let container = create_block(self.color);
         let prompt_paragraph = Paragraph::new(self.prompt.clone())
             .centered()
@@ -50,7 +50,7 @@ impl Component for Prompt {
 
         let chunks = Layout::default()
             .margin(5)
-            .constraints([Constraint::Min(1), Constraint::Max(2), Constraint::Min(1)])
+            .constraints([Constraint::Min(5), Constraint::Max(10), Constraint::Min(1)])
             .split(container_area);
 
         frame.render_widget(container, container_area);
