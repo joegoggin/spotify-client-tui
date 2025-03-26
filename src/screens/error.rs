@@ -24,8 +24,10 @@ impl Default for ErrorScreen {
 }
 
 impl ErrorScreen {
-    pub fn new(message: Option<String>) -> Self {
-        Self { message }
+    pub fn new(message: impl Into<String>) -> Self {
+        Self {
+            message: Some(message.into()),
+        }
     }
 }
 
