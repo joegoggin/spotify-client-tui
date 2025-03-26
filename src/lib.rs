@@ -8,7 +8,10 @@ use core::{
     spotify::{client::SpotifyClient, player::SpotifyPlayer},
     tui::{init_terminal, install_panic_hook, restore_terminal},
 };
-use screens::{auth::create_config::CreateConfigFormScreen, home::HomeScreen, Screen, ScreenType};
+use screens::{
+    auth::create_config::CreateConfigFormScreen, error::ErrorScreen, home::HomeScreen, Screen,
+    ScreenType,
+};
 
 mod auth;
 mod components;
@@ -83,6 +86,17 @@ async fn handle_control_command(args: &Args, app: &App) -> AppResult<bool> {
     return Ok(false);
 }
 
+fn handle_error<T>(result: AppResult<T>) -> Option<Message> {
+    match result {
+        Ok(_) => None,
+        Err(error) => {
+            let new_screen = Box::new(ErrorScreen::new(error.to_string()));
+
+            Some(Message::ChangeScreen { new_screen })
+        }
+    }
+}
+
 pub async fn run() -> AppResult<()> {
     let args = Args::parse();
 
@@ -98,7 +112,14 @@ pub async fn run() -> AppResult<()> {
     if config.client_id.is_none() || config.redirect_uri.is_none() || config.scope.is_none() {
         current_screen = Box::new(CreateConfigFormScreen::new(&config));
     } else {
-        app.spotify_client = Some(SpotifyClient::new(config)?);
+        let result = SpotifyClient::new(config);
+
+        match result {
+            Ok(spotify_client) => app.spotify_client = Some(spotify_client),
+            Err(_) => {
+                current_screen = Box::new(ErrorScreen::new("Failed to create Spotify client."))
+            }
+        }
 
         if is_player_command(&args) {
             handle_control_command(&args, &app).await?;
@@ -157,7 +178,12 @@ pub async fn run() -> AppResult<()> {
                 }
                 Message::SetAuthCode { code } => {
                     if let Some(mut spotify_client) = app.spotify_client.clone() {
-                        spotify_client.set_code_and_access_token(code).await?;
+                        let result = spotify_client.set_code_and_access_token(code).await;
+
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
 
                         if spotify_client.credentials.is_some() {
                             app.spotify_client = Some(spotify_client);
@@ -174,7 +200,12 @@ pub async fn run() -> AppResult<()> {
                 Message::RefreshNowPlaying => {
                     if let Some(mut spotify_client) = app.spotify_client.clone() {
                         if let Some(now_playing) = current_screen.get_now_playing() {
-                            now_playing.refresh(&mut spotify_client).await?;
+                            let result = now_playing.refresh(&mut spotify_client).await;
+
+                            if let Some(message) = handle_error(result) {
+                                current_message = Some(message);
+                                continue;
+                            }
                         }
                     }
                 }
@@ -182,28 +213,48 @@ pub async fn run() -> AppResult<()> {
                     if let Some(spotify_client) = app.spotify_client.clone() {
                         let mut player = SpotifyPlayer::new(spotify_client);
 
-                        player.toggle_pause_play().await?;
+                        let result = player.toggle_pause_play().await;
+
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 Message::Shuffle => {
                     if let Some(spotify_client) = app.spotify_client.clone() {
                         let mut player = SpotifyPlayer::new(spotify_client);
 
-                        player.toggle_shuffle().await?;
+                        let result = player.toggle_shuffle().await;
+
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 Message::NextSong => {
                     if let Some(spotify_client) = app.spotify_client.clone() {
                         let mut player = SpotifyPlayer::new(spotify_client);
 
-                        player.next_song().await?;
+                        let result = player.next_song().await;
+
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 Message::PrevSong => {
                     if let Some(spotify_client) = app.spotify_client.clone() {
                         let mut player = SpotifyPlayer::new(spotify_client);
 
-                        player.previous_song().await?;
+                        let result = player.previous_song().await;
+
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 _ => {}

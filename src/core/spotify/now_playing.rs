@@ -59,7 +59,7 @@ impl NowPlaying {
         let status = response.status();
 
         if status == 204 {
-            return Err(eyre!("Error: Playback not available"));
+            return Err(eyre!("Playback not available"));
         }
 
         if status == 401 {

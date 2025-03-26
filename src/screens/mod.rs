@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod error;
 pub mod exit;
 pub mod home;
 pub mod library;
