@@ -2,7 +2,7 @@ use async_recursion::async_recursion;
 use color_eyre::eyre::eyre;
 use serde_json::Value;
 
-use crate::AppResult;
+use crate::{utils::value::GetOrDefault, AppResult};
 
 use super::client::SpotifyClient;
 
@@ -70,96 +70,47 @@ impl NowPlaying {
 
         let json = response.json::<Value>().await?;
 
-        let mut song_string = String::new();
-        let mut album_string = String::new();
-        let mut artists_vec = Vec::<String>::new();
-        let mut song_length_num: u64 = 0;
-        let mut progress_num: u64 = 0;
-        let mut shuffle_bool = false;
+        let mut song = String::new();
+        let mut album = String::new();
+        let mut artists = Vec::<String>::new();
+        let mut song_length: u64 = 0;
+        let progress = json.get_number_or_default("progress_ms");
+        let shuffle = json.get_bool_or_default("shuffle_state");
 
         if let Some(item) = json.get("item") {
-            if let Some(song) = item.get("name") {
-                match song {
-                    Value::String(song) => song_string = song.to_owned(),
-                    _ => {}
-                }
+            song = item.get_string_or_default("name");
+
+            if let Some(album_value) = item.get("album") {
+                album = album_value.get_string_or_default("name");
             }
 
-            if let Some(album) = item.get("album") {
-                if let Some(album_name) = album.get("name") {
-                    match album_name {
-                        Value::String(album_name) => album_string = album_name.to_owned(),
-                        _ => {}
-                    }
-                }
+            let artists_array = item.get_array_or_default("artists");
+
+            for artist in artists_array {
+                let artist_name = artist.get_string_or_default("name");
+
+                artists.push(artist_name.to_string());
             }
 
-            if let Some(artists) = item.get("artists") {
-                match artists {
-                    Value::Array(artists) => {
-                        for artist in artists {
-                            if let Some(artist_name) = artist.get("name") {
-                                match artist_name {
-                                    Value::String(artist_name) => {
-                                        artists_vec.push(artist_name.to_owned())
-                                    }
-                                    _ => {}
-                                }
-                            }
-                        }
-                    }
-                    _ => {}
-                }
-            }
-
-            if let Some(song_length) = item.get("duration_ms") {
-                match song_length {
-                    Value::Number(song_length) => {
-                        if let Some(song_length) = song_length.to_owned().as_u64() {
-                            song_length_num = song_length;
-                        }
-                    }
-                    _ => {}
-                }
-            }
+            song_length = item.get_number_or_default("duration_ms");
         }
 
-        if let Some(progress) = json.get("progress_ms") {
-            match progress {
-                Value::Number(progress) => {
-                    if let Some(progress) = progress.to_owned().as_u64() {
-                        progress_num = progress;
-                    }
-                }
-                _ => {}
-            }
-        }
-
-        if let Some(shuffle) = json.get("shuffle_state") {
-            match shuffle {
-                Value::Bool(shuffle) => {
-                    shuffle_bool = shuffle.to_owned();
-                }
-                _ => {}
-            }
-        }
-
-        self.song = song_string;
-        self.artists = artists_vec;
-        self.album = album_string;
-        self.song_length = song_length_num;
-        self.progress = progress_num;
-        self.shuffle = shuffle_bool;
+        self.song = song;
+        self.artists = artists;
+        self.album = album;
+        self.song_length = song_length;
+        self.progress = progress;
+        self.shuffle = shuffle;
 
         Ok(())
     }
 
     pub fn is_empty(&self) -> bool {
         self.song == "".to_string()
-            && self.artists.is_empty()
-            && self.album == "".to_string()
-            && self.song_length == 0
-            && self.progress == 0
+            || self.artists.is_empty()
+            || self.album == "".to_string()
+            || self.song_length == 0
+            || self.progress == 0
     }
 
     fn milliseconds_to_string(ms: u64) -> String {
