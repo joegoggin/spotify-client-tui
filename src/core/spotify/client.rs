@@ -226,6 +226,8 @@ impl SpotifyClient {
 
                     let mut file = File::create(file_path)?;
                     file.write_all(data.as_bytes())?;
+
+                    self.credentials = Some(new_credentials);
                 }
             }
         }
