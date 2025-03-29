@@ -200,8 +200,10 @@ pub async fn run() -> AppResult<()> {
                         if let Some(now_playing) = current_screen.get_now_playing() {
                             let result = now_playing.refresh(&mut spotify_client).await;
 
-                            current_message = handle_error(result);
-                            continue;
+                            if let Some(message) = handle_error(result) {
+                                current_message = Some(message);
+                                continue;
+                            }
                         }
                     }
                 }
@@ -211,8 +213,10 @@ pub async fn run() -> AppResult<()> {
 
                         let result = player.toggle_pause_play(&mut spotify_client).await;
 
-                        current_message = handle_error(result);
-                        continue;
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 Message::Shuffle => {
@@ -221,8 +225,10 @@ pub async fn run() -> AppResult<()> {
 
                         let result = player.toggle_shuffle(&mut spotify_client).await;
 
-                        current_message = handle_error(result);
-                        continue;
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 Message::NextSong => {
@@ -231,8 +237,10 @@ pub async fn run() -> AppResult<()> {
 
                         let result = player.next_song(&mut spotify_client).await;
 
-                        current_message = handle_error(result);
-                        continue;
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 Message::PrevSong => {
@@ -241,8 +249,10 @@ pub async fn run() -> AppResult<()> {
 
                         let result = player.previous_song(&mut spotify_client).await;
 
-                        current_message = handle_error(result);
-                        continue;
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 _ => {}
