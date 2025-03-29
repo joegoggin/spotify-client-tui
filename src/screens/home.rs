@@ -13,6 +13,7 @@ use crate::{
 
 use super::{
     auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
+    devices::DevicesScreen,
     error::ErrorScreen,
     library::LibraryScreen,
     now_playing::NowPlayingScreen,
@@ -37,6 +38,7 @@ impl Default for HomeScreen {
             "Queue",
             "Search",
             "Library",
+            "Devices",
         ];
 
         Self {
@@ -112,6 +114,9 @@ impl Component for HomeScreen {
                 })),
                 "Library" => Ok(Some(Message::ChangeScreen {
                     new_screen: Box::new(LibraryScreen::default()),
+                })),
+                "Devices" => Ok(Some(Message::ChangeScreen {
+                    new_screen: Box::new(DevicesScreen::default()),
                 })),
                 _ => Ok(None),
             },

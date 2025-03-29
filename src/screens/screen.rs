@@ -5,7 +5,10 @@ use ratatui::crossterm::event::{self, Event};
 
 use crate::{
     components::Component,
-    core::{app::App, spotify::now_playing::NowPlaying},
+    core::{
+        app::App,
+        spotify::{device::Device, now_playing::NowPlaying},
+    },
     AppResult, Message,
 };
 
@@ -23,6 +26,7 @@ pub enum ScreenType {
     SearchScreen,
     LibraryScreen,
     ErrorScreen,
+    DevicesScreen,
 }
 
 pub trait Screen: ScreenClone + Component {
@@ -53,6 +57,10 @@ pub trait Screen: ScreenClone + Component {
     }
 
     fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
+        None
+    }
+
+    fn get_device(&mut self) -> Option<&mut Device> {
         None
     }
 }

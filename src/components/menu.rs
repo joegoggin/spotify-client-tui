@@ -53,6 +53,7 @@ impl Menu {
         Color::White
     }
 }
+
 impl Component for Menu {
     fn view(&mut self, _: &App, frame: &mut Frame) {
         if self.show_menu {

@@ -146,7 +146,7 @@ impl Component for NowPlayingScreen {
                     return Ok(Some(Message::ChangeScreen { new_screen }));
                 }
 
-                return Ok(Some(Message::RefreshNowPlaying));
+                Ok(Some(Message::RefreshNowPlaying))
             }
             None => {
                 let config = Config::new()?;
@@ -170,7 +170,7 @@ impl Component for NowPlayingScreen {
 
     fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
         match key.code {
-            KeyCode::Char(' ') => Ok(Some(Message::PausePlay)),
+            KeyCode::Char('p') => Ok(Some(Message::PausePlay)),
             KeyCode::Char('s') => Ok(Some(Message::Shuffle)),
             KeyCode::Char('l') => Ok(Some(Message::NextSong)),
             KeyCode::Char('h') => Ok(Some(Message::PrevSong)),

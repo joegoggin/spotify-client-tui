@@ -1,7 +1,7 @@
 use async_recursion::async_recursion;
 use color_eyre::eyre::eyre;
 use log::error;
-use serde_json::{json, Value};
+use serde_json::Value;
 
 use crate::AppResult;
 
@@ -189,84 +189,6 @@ impl SpotifyPlayer {
                     }
                 }
             }
-        }
-
-        Ok(())
-    }
-
-    #[async_recursion]
-    pub async fn list_devices(&self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
-        let auth_header = spotify_client.get_auth_header()?;
-
-        let response = spotify_client
-            .http_client
-            .get("https://api.spotify.com/v1/me/player/devices")
-            .header("Authorization", auth_header)
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        if status == 401 {
-            spotify_client.refresh_auth_token().await?;
-
-            return self.list_devices(spotify_client).await;
-        }
-
-        if status == 200 {
-            let response_json = response.json::<Value>().await?;
-
-            if let Some(devices) = response_json.get("devices") {
-                if let Value::Array(devices) = devices {
-                    for device in devices {
-                        if let Some(id) = device.get("id") {
-                            if let Value::String(id) = id {
-                                println!("id: {}", id);
-                            }
-                        }
-
-                        if let Some(name) = device.get("name") {
-                            if let Value::String(name) = name {
-                                println!("name: {}", name);
-                            }
-                        }
-
-                        println!();
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
-
-    #[async_recursion]
-    pub async fn set_device(
-        &mut self,
-        spotify_client: &mut SpotifyClient,
-        device_id: String,
-    ) -> AppResult<()> {
-        let auth_header = spotify_client.get_auth_header()?;
-
-        let body = json!({
-            "device_ids": [&device_id],
-            "play": true,
-        });
-
-        let response = spotify_client
-            .http_client
-            .put("https://api.spotify.com/v1/me/player")
-            .header("Authorization", auth_header)
-            .json(&body)
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        if status == 401 {
-            spotify_client.refresh_auth_token().await?;
-
-            return self.set_device(spotify_client, device_id).await;
         }
 
         Ok(())
