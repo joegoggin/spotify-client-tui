@@ -48,40 +48,42 @@ fn is_player_command(args: &Args) -> bool {
     return false;
 }
 
-async fn handle_player_command(args: &Args, app: &mut App) -> AppResult<()> {
+async fn handle_control_command(args: &Args, app: &App) -> AppResult<bool> {
     if let Some(command) = args.command.clone() {
         match command {
             Command::Player { player_command } => {
-                if let Some(mut spotify_client) = app.spotify_client.as_mut() {
-                    let mut player = SpotifyPlayer::new();
+                if let Some(spotify_client) = app.spotify_client.clone() {
+                    let mut player = SpotifyPlayer::new(spotify_client.clone());
 
                     match player_command {
                         PlayerCommand::PausePlay => {
-                            player.toggle_pause_play(&mut spotify_client).await?;
+                            player.toggle_pause_play().await?;
                         }
                         PlayerCommand::NextSong => {
-                            player.next_song(&mut spotify_client).await?;
+                            player.next_song().await?;
                         }
                         PlayerCommand::PreviousSong => {
-                            player.previous_song(&mut spotify_client).await?;
+                            player.previous_song().await?;
                         }
                         PlayerCommand::Shuffle => {
-                            player.toggle_shuffle(&mut spotify_client).await?;
+                            player.toggle_shuffle().await?;
                         }
                         PlayerCommand::Devices => {
-                            player.list_devices(&mut spotify_client).await?;
+                            player.list_devices().await?;
                         }
                         PlayerCommand::Device { id } => {
-                            player.set_device(&mut spotify_client, id).await?;
+                            player.set_device(id).await?;
                         }
                     }
                 }
+
+                return Ok(true);
             }
             _ => {}
         }
     }
 
-    return Ok(());
+    return Ok(false);
 }
 
 fn handle_error<T>(result: AppResult<T>) -> Option<Message> {
@@ -120,7 +122,7 @@ pub async fn run() -> AppResult<()> {
         }
 
         if is_player_command(&args) {
-            handle_player_command(&args, &mut app).await?;
+            handle_control_command(&args, &app).await?;
             return Ok(());
         }
     }
@@ -150,7 +152,7 @@ pub async fn run() -> AppResult<()> {
                     if new_screen.get_screen_type() == ScreenType::Home && is_player_command(&args)
                     {
                         app.is_running = false;
-                        handle_player_command(&args, &mut app).await?;
+                        handle_control_command(&args, &app).await?;
                     }
 
                     current_screen = new_screen;
@@ -196,53 +198,63 @@ pub async fn run() -> AppResult<()> {
                     }
                 }
                 Message::RefreshNowPlaying => {
-                    if let Some(mut spotify_client) = app.spotify_client.as_mut() {
+                    if let Some(mut spotify_client) = app.spotify_client.clone() {
                         if let Some(now_playing) = current_screen.get_now_playing() {
                             let result = now_playing.refresh(&mut spotify_client).await;
 
-                            current_message = handle_error(result);
-                            continue;
+                            if let Some(message) = handle_error(result) {
+                                current_message = Some(message);
+                                continue;
+                            }
                         }
                     }
                 }
                 Message::PausePlay => {
-                    if let Some(mut spotify_client) = app.spotify_client.as_mut() {
-                        let player = SpotifyPlayer::new();
+                    if let Some(spotify_client) = app.spotify_client.clone() {
+                        let mut player = SpotifyPlayer::new(spotify_client);
 
-                        let result = player.toggle_pause_play(&mut spotify_client).await;
+                        let result = player.toggle_pause_play().await;
 
-                        current_message = handle_error(result);
-                        continue;
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 Message::Shuffle => {
-                    if let Some(mut spotify_client) = app.spotify_client.as_mut() {
-                        let player = SpotifyPlayer::new();
+                    if let Some(spotify_client) = app.spotify_client.clone() {
+                        let mut player = SpotifyPlayer::new(spotify_client);
 
-                        let result = player.toggle_shuffle(&mut spotify_client).await;
+                        let result = player.toggle_shuffle().await;
 
-                        current_message = handle_error(result);
-                        continue;
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 Message::NextSong => {
-                    if let Some(mut spotify_client) = app.spotify_client.as_mut() {
-                        let player = SpotifyPlayer::new();
+                    if let Some(spotify_client) = app.spotify_client.clone() {
+                        let mut player = SpotifyPlayer::new(spotify_client);
 
-                        let result = player.next_song(&mut spotify_client).await;
+                        let result = player.next_song().await;
 
-                        current_message = handle_error(result);
-                        continue;
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 Message::PrevSong => {
-                    if let Some(mut spotify_client) = app.spotify_client.as_mut() {
-                        let player = SpotifyPlayer::new();
+                    if let Some(spotify_client) = app.spotify_client.clone() {
+                        let mut player = SpotifyPlayer::new(spotify_client);
 
-                        let result = player.previous_song(&mut spotify_client).await;
+                        let result = player.previous_song().await;
 
-                        current_message = handle_error(result);
-                        continue;
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
+                        }
                     }
                 }
                 _ => {}
