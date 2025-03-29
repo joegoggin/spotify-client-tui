@@ -48,7 +48,7 @@ fn is_player_command(args: &Args) -> bool {
     return false;
 }
 
-async fn handle_player_command(args: &Args, app: &mut App) -> AppResult<bool> {
+async fn handle_player_command(args: &Args, app: &mut App) -> AppResult<()> {
     if let Some(command) = args.command.clone() {
         match command {
             Command::Player { player_command } => {
@@ -76,14 +76,12 @@ async fn handle_player_command(args: &Args, app: &mut App) -> AppResult<bool> {
                         }
                     }
                 }
-
-                return Ok(true);
             }
             _ => {}
         }
     }
 
-    return Ok(false);
+    return Ok(());
 }
 
 fn handle_error<T>(result: AppResult<T>) -> Option<Message> {
