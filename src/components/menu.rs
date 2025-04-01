@@ -1,6 +1,5 @@
 use std::usize;
 
-use log::debug;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Layout, Rect},
@@ -125,9 +124,6 @@ impl Component for Menu {
 
             let start_index: usize = self.get_start_index().into();
             let end_index: usize = self.get_end_index().into();
-
-            debug!("start_index: {}", start_index);
-            debug!("end_index: {}", end_index);
 
             for i in start_index..end_index {
                 let paragraph = items[i].clone();
