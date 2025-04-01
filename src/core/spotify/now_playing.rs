@@ -1,6 +1,5 @@
 use async_recursion::async_recursion;
 use color_eyre::eyre::eyre;
-use reqwest::StatusCode;
 use serde_json::Value;
 
 use crate::{utils::value::GetOrDefault, AppResult};
@@ -47,7 +46,7 @@ impl NowPlaying {
     }
 
     #[async_recursion]
-    pub async fn refresh(&mut self, spotify_client: &mut SpotifyClient) -> AppResult<StatusCode> {
+    pub async fn refresh(&mut self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
         let auth_header = spotify_client.get_auth_header()?;
 
         let response = spotify_client
@@ -103,7 +102,7 @@ impl NowPlaying {
         self.progress = progress;
         self.shuffle = shuffle;
 
-        Ok(status)
+        Ok(())
     }
 
     pub fn is_empty(&self) -> bool {

@@ -52,7 +52,7 @@ impl Component for NowPlayingScreen {
         ScreenBlock::new_with_color("Now Playing", Color::Green).view(app, frame);
 
         if self.now_playing.is_empty() {
-            let paragraph = Paragraph::new("Now playing data not available")
+            let paragraph = Paragraph::new("Loading ...")
                 .centered()
                 .wrap(Wrap { trim: false });
             let area = get_centered_rect(70, 50, frame.area());
