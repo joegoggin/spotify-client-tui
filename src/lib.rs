@@ -11,7 +11,7 @@ use core::{
 use screens::{
     auth::create_config::CreateConfigFormScreen, devices::DevicesScreen, error::ErrorScreen,
     home::HomeScreen, library::LibraryScreen, now_playing::NowPlayingScreen, queue::QueueScreen,
-    search::SearchScreen, view_album::ViewAlbumScreen, view_artist::ViewArtistScreen, Screen,
+    search::SearchScreen, view::album::ViewAlbumScreen, view::artist::ViewArtistScreen, Screen,
     ScreenType,
 };
 

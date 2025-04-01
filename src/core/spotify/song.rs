@@ -11,6 +11,7 @@ pub struct Song {
     pub name: String,
     pub artists: Vec<String>,
     pub song_length: u64,
+    pub disk_number: u64,
     pub track_number: u64,
 }
 
@@ -21,6 +22,7 @@ impl Default for Song {
             name: String::new(),
             artists: vec![],
             song_length: 0,
+            disk_number: 0,
             track_number: 0,
         }
     }
@@ -33,6 +35,7 @@ impl Song {
             name: String::new(),
             artists: vec![],
             song_length: 0,
+            disk_number: 0,
             track_number: 0,
         }
     }
@@ -62,6 +65,7 @@ impl Song {
         let name = json.get_string_or_default("name");
         let mut artists = Vec::<String>::new();
         let song_length = json.get_number_or_default("duration_ms");
+        let disk_number = json.get_number_or_default("disc_number");
         let track_number = json.get_number_or_default("track_number");
 
         let artists_array = json.get_array_or_default("artists");
@@ -74,10 +78,25 @@ impl Song {
 
         self.name = name;
         self.artists = artists;
+        self.disk_number = disk_number;
         self.song_length = song_length;
         self.track_number = track_number;
 
         Ok(())
+    }
+
+    pub fn get_artists_string(&self) -> String {
+        let mut artists_string = String::new();
+
+        for (index, value) in self.artists.iter().enumerate() {
+            if index == self.artists.len() - 1 {
+                artists_string = artists_string + &format!("{}", value);
+            } else {
+                artists_string = artists_string + &format!("{}, ", value);
+            }
+        }
+
+        artists_string
     }
 
     pub fn is_empty(&self) -> bool {

@@ -19,8 +19,8 @@ use super::{
     now_playing::NowPlayingScreen,
     queue::QueueScreen,
     search::SearchScreen,
-    view_album::ViewAlbumScreen,
-    view_artist::ViewArtistScreen,
+    view::album::ViewAlbumScreen,
+    view::artist::ViewArtistScreen,
     Screen, ScreenType,
 };
 

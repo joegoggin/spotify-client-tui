@@ -1,5 +1,4 @@
 use async_recursion::async_recursion;
-use log::debug;
 use serde_json::Value;
 
 use crate::{utils::value::GetOrDefault, AppResult};
@@ -96,8 +95,31 @@ impl Album {
         self.songs = songs;
         self.total_songs = total_songs;
 
-        debug!("{:#?}", self);
         Ok(())
+    }
+
+    pub fn get_first_artist(&self) -> String {
+        let mut first_artist = String::new();
+
+        if let Some(artist) = self.artists.get(0) {
+            first_artist = artist.clone();
+        }
+
+        first_artist
+    }
+
+    pub fn get_artists_string(&self) -> String {
+        let mut artists_string = String::new();
+
+        for (index, value) in self.artists.iter().enumerate() {
+            if index == self.artists.len() - 1 {
+                artists_string = artists_string + &format!("{}", value);
+            } else {
+                artists_string = artists_string + &format!("{}, ", value);
+            }
+        }
+
+        artists_string
     }
 
     pub fn is_empty(&self) -> bool {
