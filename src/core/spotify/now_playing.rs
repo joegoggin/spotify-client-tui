@@ -1,17 +1,16 @@
 use async_recursion::async_recursion;
 use color_eyre::eyre::eyre;
+use log::debug;
 use serde_json::Value;
 
 use crate::{utils::value::GetOrDefault, AppResult};
 
-use super::client::SpotifyClient;
+use super::{album::Album, client::SpotifyClient, song::Song};
 
 #[derive(Debug, Clone)]
 pub struct NowPlaying {
-    pub song: String,
-    pub artists: Vec<String>,
-    pub album: String,
-    pub song_length: u64,
+    pub song: Song,
+    pub album: Album,
     pub progress: u64,
     pub shuffle: bool,
 }
@@ -19,10 +18,8 @@ pub struct NowPlaying {
 impl Default for NowPlaying {
     fn default() -> Self {
         Self {
-            song: String::new(),
-            artists: vec![].into(),
-            album: String::new(),
-            song_length: 0,
+            song: Song::default(),
+            album: Album::default(),
             progress: 0,
             shuffle: false,
         }
@@ -31,7 +28,7 @@ impl Default for NowPlaying {
 
 impl NowPlaying {
     pub fn get_song_length_string(&self) -> String {
-        Self::milliseconds_to_string(self.song_length)
+        Self::milliseconds_to_string(self.song.song_length)
     }
 
     pub fn get_progress_string(&self) -> String {
@@ -70,35 +67,27 @@ impl NowPlaying {
 
         let json = response.json::<Value>().await?;
 
-        let mut song = String::new();
-        let mut album = String::new();
-        let mut artists = Vec::<String>::new();
-        let mut song_length: u64 = 0;
         let progress = json.get_number_or_default("progress_ms");
         let shuffle = json.get_bool_or_default("shuffle_state");
 
         if let Some(item) = json.get("item") {
-            song = item.get_string_or_default("name");
+            let song_id = item.get_string_or_default("id");
+
+            if song_id != self.song.id {
+                self.song.id = song_id;
+                self.song.refresh(spotify_client).await?;
+            }
 
             if let Some(album_value) = item.get("album") {
-                album = album_value.get_string_or_default("name");
+                let album_id = album_value.get_string_or_default("id");
+
+                if album_id != self.album.id {
+                    self.album.id = album_id;
+                    self.album.refresh(spotify_client).await?;
+                }
             }
-
-            let artists_array = item.get_array_or_default("artists");
-
-            for artist in artists_array {
-                let artist_name = artist.get_string_or_default("name");
-
-                artists.push(artist_name.to_string());
-            }
-
-            song_length = item.get_number_or_default("duration_ms");
         }
 
-        self.song = song;
-        self.artists = artists;
-        self.album = album;
-        self.song_length = song_length;
         self.progress = progress;
         self.shuffle = shuffle;
 
@@ -106,10 +95,9 @@ impl NowPlaying {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.song == "".to_string()
-            || self.artists.is_empty()
-            || self.album == "".to_string()
-            || self.song_length == 0
+        self.song.is_empty()
+            || self.album.is_empty()
+            || self.song.song_length == 0
             || self.progress == 0
     }
 
