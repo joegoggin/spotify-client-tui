@@ -52,7 +52,7 @@ impl Component for NowPlayingScreen {
         ScreenBlock::new_with_color("Now Playing", Color::Green).view(app, frame);
 
         if self.now_playing.is_empty() {
-            let paragraph = Paragraph::new("Now playing data not available")
+            let paragraph = Paragraph::new("Loading ...")
                 .centered()
                 .wrap(Wrap { trim: false });
             let area = get_centered_rect(70, 50, frame.area());
@@ -146,7 +146,7 @@ impl Component for NowPlayingScreen {
                     return Ok(Some(Message::ChangeScreen { new_screen }));
                 }
 
-                return Ok(Some(Message::RefreshNowPlaying));
+                Ok(Some(Message::RefreshNowPlaying))
             }
             None => {
                 let config = Config::new()?;
@@ -170,7 +170,7 @@ impl Component for NowPlayingScreen {
 
     fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
         match key.code {
-            KeyCode::Char(' ') => Ok(Some(Message::PausePlay)),
+            KeyCode::Char('p') => Ok(Some(Message::PausePlay)),
             KeyCode::Char('s') => Ok(Some(Message::Shuffle)),
             KeyCode::Char('l') => Ok(Some(Message::NextSong)),
             KeyCode::Char('h') => Ok(Some(Message::PrevSong)),

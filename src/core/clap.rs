@@ -43,5 +43,5 @@ pub enum PlayerCommand {
     /// List Available Devices
     Devices,
     /// Play On Device
-    Device { id: String },
+    SetDevice { id: String },
 }
