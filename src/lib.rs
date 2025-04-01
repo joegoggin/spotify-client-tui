@@ -2,7 +2,7 @@ use auth::server::AuthServer;
 use clap::Parser;
 use core::{
     app::App,
-    clap::{Args, Command, PlayerCommand},
+    clap::{Args, Command, PlayerCommand, ViewCommand},
     config::Config,
     logging::setup_logging,
     spotify::{client::SpotifyClient, device::Device, player::SpotifyPlayer},
@@ -10,7 +10,9 @@ use core::{
 };
 use screens::{
     auth::create_config::CreateConfigFormScreen, devices::DevicesScreen, error::ErrorScreen,
-    home::HomeScreen, Screen, ScreenType,
+    home::HomeScreen, library::LibraryScreen, now_playing::NowPlayingScreen, queue::QueueScreen,
+    search::SearchScreen, view_album::ViewAlbumScreen, view_artist::ViewArtistScreen, Screen,
+    ScreenType,
 };
 
 mod auth;
@@ -50,7 +52,7 @@ fn is_player_command(args: &Args) -> bool {
     return false;
 }
 
-async fn handle_control_command(args: &Args, app: &mut App) -> AppResult<bool> {
+async fn handle_player_command(args: &Args, app: &mut App) -> AppResult<bool> {
     if let Some(command) = args.command.clone() {
         match command {
             Command::Player { player_command } => {
@@ -127,8 +129,44 @@ pub async fn run() -> AppResult<()> {
         }
 
         if is_player_command(&args) {
-            handle_control_command(&args, &mut app).await?;
+            handle_player_command(&args, &mut app).await?;
             return Ok(());
+        }
+
+        if let Some(command) = args.command.clone() {
+            match command {
+                Command::NowPlaying => {
+                    app.history.prev.push(current_screen.clone_box());
+                    current_screen = Box::new(NowPlayingScreen::default());
+                }
+                Command::View { view_command } => match view_command {
+                    ViewCommand::Album => {
+                        app.history.prev.push(current_screen.clone_box());
+                        current_screen = Box::new(ViewAlbumScreen::default());
+                    }
+                    ViewCommand::Artist => {
+                        app.history.prev.push(current_screen.clone_box());
+                        current_screen = Box::new(ViewArtistScreen::default());
+                    }
+                },
+                Command::Queue => {
+                    app.history.prev.push(current_screen.clone_box());
+                    current_screen = Box::new(QueueScreen::default());
+                }
+                Command::Search => {
+                    app.history.prev.push(current_screen.clone_box());
+                    current_screen = Box::new(SearchScreen::default());
+                }
+                Command::Library => {
+                    app.history.prev.push(current_screen.clone());
+                    current_screen = Box::new(LibraryScreen::default());
+                }
+                Command::Devices => {
+                    app.history.prev.push(current_screen.clone());
+                    current_screen = Box::new(DevicesScreen::default());
+                }
+                _ => {}
+            }
         }
     }
 
@@ -157,7 +195,7 @@ pub async fn run() -> AppResult<()> {
                     if new_screen.get_screen_type() == ScreenType::Home && is_player_command(&args)
                     {
                         app.is_running = false;
-                        handle_control_command(&args, &mut app).await?;
+                        handle_player_command(&args, &mut app).await?;
                     }
 
                     current_screen = new_screen;
