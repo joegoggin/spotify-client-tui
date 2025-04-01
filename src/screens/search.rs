@@ -17,7 +17,7 @@ pub struct SearchScreen;
 
 impl Default for SearchScreen {
     fn default() -> Self {
-        Self
+        Self {}
     }
 }
 

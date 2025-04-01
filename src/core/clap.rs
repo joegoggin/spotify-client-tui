@@ -18,16 +18,19 @@ pub enum Command {
     /// Display information about song that is currently playing and control Pause/Play, Skip Song,
     /// Previous Song, and Shuffle
     NowPlaying,
-    /// View songs and albums by the artist that is currently playing
-    ViewArtist,
-    /// View information on the album currently playing
-    ViewAlbum,
-    /// View and edit current queue
-    Queue,
+    /// View information based on the song that is currently playing
+    View {
+        #[command(subcommand)]
+        view_command: ViewCommand,
+    },
     /// Search for an album, song, or artist on Spotify
     Search,
+    /// View and edit current queue
+    Queue,
     /// View songs, albums, artists and playlist from your Spotify library
     Library,
+    /// Change what device Spotify is playing on
+    Devices,
 }
 
 #[derive(Subcommand, Debug, Clone)]
@@ -44,4 +47,12 @@ pub enum PlayerCommand {
     Devices,
     /// Play On Device
     SetDevice { id: String },
+}
+
+#[derive(Subcommand, Debug, Clone)]
+pub enum ViewCommand {
+    /// View songs and albums by the artist that is currently playing
+    Artist,
+    /// View information on the album currently playing
+    Album,
 }
