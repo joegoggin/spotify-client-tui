@@ -1,6 +1,9 @@
+use std::rc::Rc;
+
+use log::debug;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
-    layout::{Constraint, Direction, Layout},
+    layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     widgets::{Paragraph, Wrap},
     Frame,
@@ -21,11 +24,12 @@ use crate::{
     AppResult, Message,
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ViewAlbumScreen {
     now_playing: NowPlaying,
+    album_id: String,
     acitve_song_index: usize,
-    num_of_songs_shown: u16,
+    max_songs_shown: u16,
     song_start_index: usize,
     song_end_index: usize,
 }
@@ -34,8 +38,9 @@ impl Default for ViewAlbumScreen {
     fn default() -> Self {
         Self {
             now_playing: NowPlaying::default(),
+            album_id: String::new(),
             acitve_song_index: 0,
-            num_of_songs_shown: 0,
+            max_songs_shown: 0,
             song_start_index: 0,
             song_end_index: 0,
         }
@@ -67,15 +72,14 @@ impl ViewAlbumScreen {
         style
     }
 
-    fn set_num_of_songs_shown(&mut self, num_of_songs_shown: u16) {
-        if self.num_of_songs_shown == num_of_songs_shown {
-            return;
-        }
+    fn reset_song_list(&mut self, area: &Rect) {
+        let max_songs_shown = area.height - 2;
 
-        self.num_of_songs_shown = num_of_songs_shown;
-        self.song_end_index = num_of_songs_shown.into();
+        self.max_songs_shown = max_songs_shown;
+        self.song_end_index = max_songs_shown.into();
         self.song_start_index = 0;
         self.acitve_song_index = 0;
+        self.album_id = self.now_playing.album.id.clone();
     }
 }
 
@@ -111,7 +115,7 @@ impl Component for ViewAlbumScreen {
         let chunks = Layout::default()
             .margin(5)
             .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Percentage(60), Constraint::Percentage(40)])
+            .constraints(vec![Constraint::Percentage(50), Constraint::Percentage(50)])
             .split(frame.area());
 
         frame.render_widget(song_list_block.clone(), chunks[0]);
@@ -120,26 +124,30 @@ impl Component for ViewAlbumScreen {
         let mut song_constraits = Vec::<Constraint>::new();
         let mut song_paragraphs = Vec::<Paragraph>::new();
 
-        self.set_num_of_songs_shown(chunks[0].height - 2);
+        if self.album_id != self.now_playing.album.id {
+            self.reset_song_list(&chunks[0]);
+        }
 
-        for _ in 0..chunks[0].height - 2 {
+        for _ in 0..self.max_songs_shown {
             song_constraits.push(Constraint::Max(1))
         }
 
         for i in self.song_start_index..self.song_end_index {
-            let song = &self.now_playing.album.songs[i];
-            let mut song_string = format!("{}. {}", song.track_number, song.name);
+            if i < self.now_playing.album.total_songs as usize {
+                let song = &self.now_playing.album.songs[i];
+                let mut song_string = format!("{}. {}", song.track_number, song.name);
 
-            if song.id == self.now_playing.song.id {
-                song_string = format!("* {} *", song_string);
+                if song.id == self.now_playing.song.id {
+                    song_string = format!("* {} *", song_string);
+                }
+
+                let paragraph = Paragraph::new(song_string)
+                    .left_aligned()
+                    .style(self.get_song_style(i))
+                    .wrap(Wrap { trim: false });
+
+                song_paragraphs.push(paragraph);
             }
-
-            let paragraph = Paragraph::new(song_string)
-                .left_aligned()
-                .style(self.get_song_style(i))
-                .wrap(Wrap { trim: false });
-
-            song_paragraphs.push(paragraph);
         }
 
         let song_chunks = Layout::default()
@@ -149,7 +157,9 @@ impl Component for ViewAlbumScreen {
             .split(chunks[0]);
 
         for i in 0..song_chunks.len() {
-            frame.render_widget(song_paragraphs[i].clone(), song_chunks[i]);
+            if i < song_paragraphs.len() {
+                frame.render_widget(song_paragraphs[i].clone(), song_chunks[i]);
+            }
         }
 
         let song = &self.now_playing.album.songs[self.acitve_song_index];
@@ -182,8 +192,10 @@ impl Component for ViewAlbumScreen {
         let mut info_constraints = Vec::<Constraint>::new();
 
         for _ in 0..7 {
-            info_constraints.push(Constraint::Min(1));
+            info_constraints.push(Constraint::Min(5));
         }
+
+        info_constraints.push(Constraint::Min(0));
 
         let info_chunks = Layout::default()
             .margin(1)
@@ -243,7 +255,7 @@ impl Component for ViewAlbumScreen {
                 } else {
                     self.acitve_song_index = 0;
                     self.song_start_index = 0;
-                    self.song_end_index = self.num_of_songs_shown.into();
+                    self.song_end_index = self.max_songs_shown.into();
                 }
 
                 Ok(None)
@@ -256,9 +268,15 @@ impl Component for ViewAlbumScreen {
 
                 if self.acitve_song_index == 0 {
                     self.acitve_song_index = self.now_playing.album.songs.len() - 1;
-                    self.song_start_index =
-                        self.now_playing.album.songs.len() - (self.num_of_songs_shown) as usize;
                     self.song_end_index = self.now_playing.album.songs.len();
+
+                    if self.now_playing.album.total_songs < self.max_songs_shown as u64 {
+                        self.song_start_index = 0;
+                    } else {
+                        self.song_start_index = (self.now_playing.album.total_songs
+                            - self.max_songs_shown as u64)
+                            as usize;
+                    }
                 } else {
                     self.acitve_song_index = self.acitve_song_index - 1;
                 }
