@@ -1,6 +1,9 @@
 use ratatui::{crossterm::event::KeyEvent, Frame};
 
-use crate::{core::app::App, AppResult, Message};
+use crate::{
+    core::{app::App, message::Message},
+    AppResult,
+};
 
 pub trait Component {
     fn view(&mut self, app: &App, frame: &mut Frame);

@@ -11,12 +11,13 @@ use crate::{
     core::{
         app::App,
         config::Config,
+        message::Message,
         spotify::{client::SpotifyClient, now_playing::NowPlaying},
     },
     widgets::paragraph::{
         create_centered_paragraph, create_left_aligned_paragraph, create_right_aligned_paragraph,
     },
-    AppResult, Message,
+    AppResult,
 };
 
 use super::{

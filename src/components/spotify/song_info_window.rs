@@ -9,10 +9,11 @@ use crate::{
     components::Component,
     core::{
         app::App,
+        message::Message,
         spotify::{album::Album, song::Song},
     },
     widgets::paragraph::create_left_aligned_paragraph,
-    AppResult, Message,
+    AppResult,
 };
 
 #[derive(Debug, Clone)]

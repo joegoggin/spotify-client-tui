@@ -10,9 +10,10 @@ use crate::{
     components::Component,
     core::{
         app::App,
+        message::Message,
         spotify::{album::Album, song::Song},
     },
-    AppResult, Message,
+    AppResult,
 };
 
 #[derive(Debug, Clone)]

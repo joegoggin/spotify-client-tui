@@ -7,9 +7,10 @@ use crate::{
     components::Component,
     core::{
         app::App,
+        message::Message,
         spotify::{device::Device, now_playing::NowPlaying},
     },
-    AppResult, Message,
+    AppResult,
 };
 
 #[derive(ValueEnum, PartialEq, Debug, Clone)]
