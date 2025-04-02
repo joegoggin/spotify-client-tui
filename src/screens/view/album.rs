@@ -1,6 +1,3 @@
-use std::rc::Rc;
-
-use log::debug;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Direction, Layout, Rect},
@@ -282,6 +279,17 @@ impl Component for ViewAlbumScreen {
                 }
 
                 Ok(None)
+            }
+            KeyCode::Enter => {
+                let track_number = self.now_playing.album.songs[self.acitve_song_index]
+                    .clone()
+                    .track_number;
+                let album_id = self.now_playing.album.id.clone();
+
+                Ok(Some(Message::PlaySongOnAlbum {
+                    track_number,
+                    album_id,
+                }))
             }
             _ => Ok(None),
         }

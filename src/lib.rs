@@ -40,6 +40,7 @@ pub enum Message {
     PrevSong,
     RefreshDevice,
     SetDevice { name: String, id: String },
+    PlaySongOnAlbum { track_number: u64, album_id: String },
 }
 
 fn is_player_command(args: &Args) -> bool {
@@ -332,6 +333,22 @@ pub async fn run() -> AppResult<()> {
                             }
 
                             device.current_device_name = Some(name.to_string());
+                        }
+                    }
+                }
+                Message::PlaySongOnAlbum {
+                    track_number,
+                    album_id,
+                } => {
+                    if let Some(mut spotify_client) = app.spotify_client.as_mut() {
+                        let player = SpotifyPlayer::new();
+                        let result = player
+                            .play_song_on_album(&mut spotify_client, track_number, album_id)
+                            .await;
+
+                        if let Some(message) = handle_error(result) {
+                            current_message = Some(message);
+                            continue;
                         }
                     }
                 }

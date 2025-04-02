@@ -1,7 +1,7 @@
 use async_recursion::async_recursion;
 use color_eyre::eyre::eyre;
-use log::error;
-use serde_json::Value;
+use log::{debug, error};
+use serde_json::{json, Value};
 
 use crate::AppResult;
 
@@ -12,6 +12,38 @@ pub struct SpotifyPlayer;
 impl SpotifyPlayer {
     pub fn new() -> Self {
         Self {}
+    }
+
+    #[async_recursion]
+    pub async fn play_song_on_album(
+        &self,
+        spotify_client: &mut SpotifyClient,
+        track_number: u64,
+        album_id: String,
+    ) -> AppResult<()> {
+        let auth_header = spotify_client.get_auth_header()?;
+        let album_uri = format!("spotify:album:{}", album_id);
+        let position = track_number - 1;
+
+        let body = json!({
+            "context_uri": album_uri,
+            "offset": {
+                "position": position,
+            }
+        });
+
+        let response = spotify_client
+            .http_client
+            .put("https://api.spotify.com/v1/me/player/play")
+            .header("Authorization", auth_header)
+            .json(&body)
+            .send()
+            .await?;
+
+        let text = response.text().await?;
+        debug!("text: {:#?}", text);
+
+        Ok(())
     }
 
     #[async_recursion]
