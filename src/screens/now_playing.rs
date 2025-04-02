@@ -7,7 +7,7 @@ use ratatui::{
 };
 
 use crate::{
-    components::{screen_block::ScreenBlock, Component},
+    components::{loading::Loading, screen_block::ScreenBlock, Component},
     core::{
         app::App,
         config::Config,
@@ -52,13 +52,7 @@ impl Component for NowPlayingScreen {
         ScreenBlock::new_with_color("Now Playing", Color::Green).view(app, frame);
 
         if self.now_playing.is_empty() {
-            let paragraph = Paragraph::new("Loading ...")
-                .centered()
-                .wrap(Wrap { trim: false });
-            let area = get_centered_rect(70, 50, frame.area());
-
-            frame.render_widget(paragraph, area);
-
+            Loading::default().view(app, frame);
             return;
         }
 
