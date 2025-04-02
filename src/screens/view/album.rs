@@ -1,13 +1,13 @@
 use ratatui::{
-    crossterm::event::{KeyCode, KeyEvent},
-    layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    crossterm::event::KeyEvent,
+    layout::{Constraint, Direction, Layout},
+    style::Color,
     widgets::{Paragraph, Wrap},
     Frame,
 };
 
 use crate::{
-    components::{screen_block::ScreenBlock, Component},
+    components::{screen_block::ScreenBlock, spotify::album::song_list::AlbumSongList, Component},
     core::{
         app::App,
         config::Config,
@@ -24,22 +24,14 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct ViewAlbumScreen {
     now_playing: NowPlaying,
-    album_id: String,
-    acitve_song_index: usize,
-    max_songs_shown: u16,
-    song_start_index: usize,
-    song_end_index: usize,
+    song_list: AlbumSongList,
 }
 
 impl Default for ViewAlbumScreen {
     fn default() -> Self {
         Self {
             now_playing: NowPlaying::default(),
-            album_id: String::new(),
-            acitve_song_index: 0,
-            max_songs_shown: 0,
-            song_start_index: 0,
-            song_end_index: 0,
+            song_list: AlbumSongList::default(),
         }
     }
 }
@@ -57,26 +49,6 @@ impl ViewAlbumScreen {
         }
 
         title
-    }
-
-    fn get_song_style(&self, index: usize) -> Style {
-        let mut style = Style::default().fg(Color::Green);
-
-        if self.acitve_song_index == index {
-            style = Style::default().fg(Color::White).bg(Color::Green);
-        }
-
-        style
-    }
-
-    fn reset_song_list(&mut self, area: &Rect) {
-        let max_songs_shown = area.height - 2;
-
-        self.max_songs_shown = max_songs_shown;
-        self.song_end_index = max_songs_shown.into();
-        self.song_start_index = 0;
-        self.acitve_song_index = 0;
-        self.album_id = self.now_playing.album.id.clone();
     }
 }
 
@@ -118,48 +90,14 @@ impl Component for ViewAlbumScreen {
         frame.render_widget(song_list_block.clone(), chunks[0]);
         frame.render_widget(info_block, chunks[1]);
 
-        let mut song_constraits = Vec::<Constraint>::new();
-        let mut song_paragraphs = Vec::<Paragraph>::new();
+        self.song_list.refresh(
+            self.now_playing.album.clone(),
+            Some(self.now_playing.song.clone()),
+            &chunks[0],
+        );
+        self.song_list.view(app, frame);
 
-        if self.album_id != self.now_playing.album.id {
-            self.reset_song_list(&chunks[0]);
-        }
-
-        for _ in 0..self.max_songs_shown {
-            song_constraits.push(Constraint::Max(1))
-        }
-
-        for i in self.song_start_index..self.song_end_index {
-            if i < self.now_playing.album.total_songs as usize {
-                let song = &self.now_playing.album.songs[i];
-                let mut song_string = format!("{}. {}", song.track_number, song.name);
-
-                if song.id == self.now_playing.song.id {
-                    song_string = format!("* {} *", song_string);
-                }
-
-                let paragraph = Paragraph::new(song_string)
-                    .left_aligned()
-                    .style(self.get_song_style(i))
-                    .wrap(Wrap { trim: false });
-
-                song_paragraphs.push(paragraph);
-            }
-        }
-
-        let song_chunks = Layout::default()
-            .margin(1)
-            .direction(Direction::Vertical)
-            .constraints(song_constraits)
-            .split(chunks[0]);
-
-        for i in 0..song_chunks.len() {
-            if i < song_paragraphs.len() {
-                frame.render_widget(song_paragraphs[i].clone(), song_chunks[i]);
-            }
-        }
-
-        let song = &self.now_playing.album.songs[self.acitve_song_index];
+        let song = &self.now_playing.album.songs[self.song_list.active_song_index];
         let song_string = format!("Song: {}", song.name);
         let artists_string = format!("Artists: {}", song.get_artists_string());
         let album_string = format!("Album: {}", self.now_playing.album.name);
@@ -239,59 +177,7 @@ impl Component for ViewAlbumScreen {
         }
     }
 
-    fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
-        match key.code {
-            KeyCode::Char('j') => {
-                if self.acitve_song_index >= self.song_end_index - 1 {
-                    self.song_start_index = self.song_start_index + 1;
-                    self.song_end_index = self.song_end_index + 1;
-                }
-
-                if self.acitve_song_index < self.now_playing.album.songs.len() - 1 {
-                    self.acitve_song_index = self.acitve_song_index + 1;
-                } else {
-                    self.acitve_song_index = 0;
-                    self.song_start_index = 0;
-                    self.song_end_index = self.max_songs_shown.into();
-                }
-
-                Ok(None)
-            }
-            KeyCode::Char('k') => {
-                if self.acitve_song_index <= self.song_start_index && self.acitve_song_index != 0 {
-                    self.song_start_index = self.song_start_index - 1;
-                    self.song_end_index = self.song_end_index - 1;
-                }
-
-                if self.acitve_song_index == 0 {
-                    self.acitve_song_index = self.now_playing.album.songs.len() - 1;
-                    self.song_end_index = self.now_playing.album.songs.len();
-
-                    if self.now_playing.album.total_songs < self.max_songs_shown as u64 {
-                        self.song_start_index = 0;
-                    } else {
-                        self.song_start_index = (self.now_playing.album.total_songs
-                            - self.max_songs_shown as u64)
-                            as usize;
-                    }
-                } else {
-                    self.acitve_song_index = self.acitve_song_index - 1;
-                }
-
-                Ok(None)
-            }
-            KeyCode::Enter => {
-                let track_number = self.now_playing.album.songs[self.acitve_song_index]
-                    .clone()
-                    .track_number;
-                let album_id = self.now_playing.album.id.clone();
-
-                Ok(Some(Message::PlaySongOnAlbum {
-                    track_number,
-                    album_id,
-                }))
-            }
-            _ => Ok(None),
-        }
+    fn handle_key_press(&mut self, app: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
+        self.song_list.handle_key_press(app, key)
     }
 }

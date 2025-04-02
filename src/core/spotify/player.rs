@@ -1,6 +1,6 @@
 use async_recursion::async_recursion;
 use color_eyre::eyre::eyre;
-use log::{debug, error};
+use log::error;
 use serde_json::{json, Value};
 
 use crate::AppResult;
