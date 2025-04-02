@@ -1,14 +1,15 @@
 use ratatui::{
     crossterm::event::KeyEvent,
     layout::{Constraint, Layout},
-    style::{Color, Style},
-    widgets::Paragraph,
+    style::Color,
     Frame,
 };
 
 use crate::{
-    core::app::App, layout::rect::get_centered_rect, widgets::block::create_block, AppResult,
-    Message,
+    core::app::App,
+    layout::rect::get_centered_rect,
+    widgets::{block::create_block, paragraph::create_centered_paragraph},
+    AppResult, Message,
 };
 
 use super::Component;
@@ -40,13 +41,9 @@ impl Component for Prompt {
     fn view(&mut self, _: &App, frame: &mut Frame) {
         let container_area = get_centered_rect(70, 60, frame.area());
         let container = create_block(self.color);
-        let prompt_paragraph = Paragraph::new(self.prompt.clone())
-            .centered()
-            .style(Style::default().fg(self.color));
+        let prompt_paragraph = create_centered_paragraph(&self.prompt, Some(self.color));
         let options = "Press 'y' for yes or 'n' for no";
-        let options_paragraph = Paragraph::new(options)
-            .centered()
-            .style(Style::default().fg(self.color));
+        let options_paragraph = create_centered_paragraph(&options, Some(self.color));
 
         let chunks = Layout::default()
             .margin(5)

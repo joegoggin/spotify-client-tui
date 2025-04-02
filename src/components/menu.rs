@@ -3,12 +3,19 @@ use std::usize;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Layout, Rect},
-    style::{Color, Style},
+    style::Color,
     widgets::Paragraph,
     Frame,
 };
 
-use crate::{core::app::App, widgets::block::create_block, AppResult, Message};
+use crate::{
+    core::app::App,
+    widgets::{
+        block::create_block,
+        paragraph::{create_centered_paragraph, create_paragraph_with_block},
+    },
+    AppResult, Message,
+};
 
 use super::Component;
 
@@ -105,10 +112,7 @@ impl Component for Menu {
                 let title = item.to_string();
 
                 let block = create_block(color.clone());
-                let paragraph = Paragraph::new(title)
-                    .centered()
-                    .block(block)
-                    .style(Style::default().fg(color));
+                let paragraph = create_paragraph_with_block(&title, block, color).centered();
 
                 items.push(paragraph);
             }
@@ -138,7 +142,7 @@ impl Component for Menu {
 
             let page_count_string =
                 format!("Page {} of {}", self.current_page, self.get_total_pages());
-            let paragraph = Paragraph::new(page_count_string).centered();
+            let paragraph = create_centered_paragraph(&page_count_string, Some(Color::Green));
 
             frame.render_widget(paragraph, menu_chunks[7]);
         }

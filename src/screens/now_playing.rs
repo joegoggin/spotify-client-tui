@@ -2,7 +2,7 @@ use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Direction, Layout},
     style::{Color, Style},
-    widgets::{Gauge, Paragraph, Wrap},
+    widgets::Gauge,
     Frame,
 };
 
@@ -13,7 +13,9 @@ use crate::{
         config::Config,
         spotify::{client::SpotifyClient, now_playing::NowPlaying},
     },
-    layout::rect::get_centered_rect,
+    widgets::paragraph::{
+        create_centered_paragraph, create_left_aligned_paragraph, create_right_aligned_paragraph,
+    },
     AppResult, Message,
 };
 
@@ -71,24 +73,14 @@ impl Component for NowPlayingScreen {
             }
         }
 
-        let song_paragraph = Paragraph::new(song_string)
-            .centered()
-            .wrap(Wrap { trim: false });
-        let artist_paragraph = Paragraph::new(artist_string)
-            .centered()
-            .wrap(Wrap { trim: false });
-        let album_paragrah = Paragraph::new(album_string)
-            .centered()
-            .wrap(Wrap { trim: false });
-        let progress_paragraph = Paragraph::new(progress_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let song_length_paragraph = Paragraph::new(song_length_string)
-            .right_aligned()
-            .wrap(Wrap { trim: false });
-        let shuffle_paragraph = Paragraph::new(shuffle_string)
-            .centered()
-            .wrap(Wrap { trim: false });
+        let song_paragraph = create_centered_paragraph(&song_string, Some(Color::Green));
+        let artist_paragraph = create_centered_paragraph(&artist_string, Some(Color::Green));
+        let album_paragraph = create_centered_paragraph(&album_string, Some(Color::Green));
+        let progress_paragraph =
+            create_left_aligned_paragraph(&progress_string, Some(Color::Green));
+        let song_length_paragraph =
+            create_right_aligned_paragraph(&song_length_string, Some(Color::Green));
+        let shuffle_paragraph = create_centered_paragraph(&shuffle_string, Some(Color::Green));
 
         let progress_float: f64 = self.now_playing.progress as f64;
         let song_length_float: f64 = self.now_playing.song.song_length as f64;
@@ -124,7 +116,7 @@ impl Component for NowPlayingScreen {
 
         frame.render_widget(song_paragraph, chuncks[1]);
         frame.render_widget(artist_paragraph, chuncks[2]);
-        frame.render_widget(album_paragrah, chuncks[3]);
+        frame.render_widget(album_paragraph, chuncks[3]);
         frame.render_widget(progress_paragraph, progress_bar_chunks[0]);
         frame.render_widget(progress_bar_gauge, progress_bar_chunks[1]);
         frame.render_widget(song_length_paragraph, progress_bar_chunks[2]);
