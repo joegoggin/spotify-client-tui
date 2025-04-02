@@ -56,11 +56,11 @@ impl Component for ShowAuthLinkScreen {
         let text = "In order to use the app you will need to log into your Spotify account.\n
             You can log in by navigating to the following link in your browser:\n
             ";
-        let paragraph = create_centered_paragraph(&text, Color::White);
-        let mut link = create_paragraph(&self.auth_url, Color::Blue);
+        let paragraph = create_centered_paragraph(&text, Some(Color::White));
+        let mut link = create_paragraph(&self.auth_url, Some(Color::Blue));
 
         if self.clipboard_is_copied {
-            link = create_centered_paragraph("Link Copied to Clipboard!", Color::Green);
+            link = create_centered_paragraph("Link Copied to Clipboard!", Some(Color::Green));
         }
 
         frame.render_widget(paragraph, message_chunks[0]);

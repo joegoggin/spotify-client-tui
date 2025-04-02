@@ -1,6 +1,7 @@
 use ratatui::{
     crossterm::event::KeyEvent,
     layout::{Constraint, Direction, Layout, Rect},
+    style::Color,
     widgets::{Paragraph, Wrap},
     Frame,
 };
@@ -11,6 +12,7 @@ use crate::{
         app::App,
         spotify::{album::Album, song::Song},
     },
+    widgets::paragraph::create_left_aligned_paragraph,
     AppResult, Message,
 };
 
@@ -55,27 +57,14 @@ impl Component for SongInfoWindow {
         let disk_string = format!("Disk: {}", self.song.disk_number);
         let track_string = format!("Track {}", self.song.track_number);
 
-        let song_paragraph = Paragraph::new(song_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let artists_paragraph = Paragraph::new(artists_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let album_paragraph = Paragraph::new(album_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let year_paragraph = Paragraph::new(year_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let song_length_paragraph = Paragraph::new(song_length_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let disk_paragraph = Paragraph::new(disk_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let track_paragraph = Paragraph::new(track_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
+        let song_paragraph = create_left_aligned_paragraph(&song_string, Some(Color::Green));
+        let artists_paragraph = create_left_aligned_paragraph(&artists_string, Some(Color::Green));
+        let album_paragraph = create_left_aligned_paragraph(&album_string, Some(Color::Green));
+        let year_paragraph = create_left_aligned_paragraph(&year_string, Some(Color::Green));
+        let song_length_paragraph =
+            create_left_aligned_paragraph(&song_length_string, Some(Color::Green));
+        let disk_paragraph = create_left_aligned_paragraph(&disk_string, Some(Color::Green));
+        let track_paragraph = create_left_aligned_paragraph(&track_string, Some(Color::Green));
 
         let mut info_constraints = Vec::<Constraint>::new();
 

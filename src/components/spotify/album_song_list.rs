@@ -89,6 +89,8 @@ impl Component for AlbumSongList {
                     song_string = format!("* {} *", song_string);
                 }
 
+                let song_string = song_string;
+
                 let paragraph = Paragraph::new(song_string)
                     .left_aligned()
                     .style(self.get_song_style(i))

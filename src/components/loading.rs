@@ -1,10 +1,11 @@
 use ratatui::{
     layout::{Constraint, Layout},
+    style::Color,
     widgets::Paragraph,
     Frame,
 };
 
-use crate::{core::app::App, AppResult, Message};
+use crate::{core::app::App, widgets::paragraph::create_centered_paragraph, AppResult, Message};
 
 use super::Component;
 
@@ -19,7 +20,7 @@ impl Default for Loading {
 
 impl Component for Loading {
     fn view(&mut self, _: &App, frame: &mut Frame) {
-        let paragraph = Paragraph::new("Loading ...").centered();
+        let paragraph = create_centered_paragraph("Loading ...", Some(Color::Green));
 
         let chunks = Layout::default()
             .margin(5)
