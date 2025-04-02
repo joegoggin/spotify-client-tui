@@ -24,7 +24,7 @@ use super::{
     Screen, ScreenType,
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct NowPlayingScreen {
     now_playing: NowPlaying,
 }
@@ -62,15 +62,15 @@ impl Component for NowPlayingScreen {
             return;
         }
 
-        let song_string = format!("Song: {}", self.now_playing.song);
+        let song_string = format!("Song: {}", self.now_playing.song.name);
         let mut artist_string = "Artists: ".to_string();
-        let album_string = format!("Album: {}", self.now_playing.album);
+        let album_string = format!("Album: {}", self.now_playing.album.name);
         let progress_string = self.now_playing.get_progress_string();
         let song_length_string = self.now_playing.get_song_length_string();
         let shuffle_string = self.now_playing.get_shuffle_string();
 
-        for (index, value) in self.now_playing.artists.iter().enumerate() {
-            if index == self.now_playing.artists.len() - 1 {
+        for (index, value) in self.now_playing.song.artists.iter().enumerate() {
+            if index == self.now_playing.song.artists.len() - 1 {
                 artist_string = artist_string + &format!("{}", value);
             } else {
                 artist_string = artist_string + &format!("{}, ", value);
@@ -97,7 +97,7 @@ impl Component for NowPlayingScreen {
             .wrap(Wrap { trim: false });
 
         let progress_float: f64 = self.now_playing.progress as f64;
-        let song_length_float: f64 = self.now_playing.song_length as f64;
+        let song_length_float: f64 = self.now_playing.song.song_length as f64;
         let percent: u16 = ((progress_float / song_length_float) * 100.0) as u16;
 
         let progress_bar_gauge = Gauge::default()

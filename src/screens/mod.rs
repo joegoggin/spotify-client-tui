@@ -8,7 +8,6 @@ pub mod now_playing;
 pub mod queue;
 pub mod screen;
 pub mod search;
-pub mod view_album;
-pub mod view_artist;
+pub mod view;
 
 pub use screen::{Screen, ScreenType};

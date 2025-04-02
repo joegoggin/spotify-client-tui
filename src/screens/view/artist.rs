@@ -4,12 +4,11 @@ use ratatui::{crossterm::event::KeyEvent, style::Color, Frame};
 use crate::{
     components::{screen_block::ScreenBlock, Component},
     core::{app::App, config::Config, spotify::client::SpotifyClient},
+    screens::{
+        auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
+        Screen, ScreenType,
+    },
     AppResult, Message,
-};
-
-use super::{
-    auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
-    Screen, ScreenType,
 };
 
 #[derive(Clone)]
