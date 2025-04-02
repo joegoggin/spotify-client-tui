@@ -40,8 +40,15 @@ impl SpotifyPlayer {
             .send()
             .await?;
 
-        let text = response.text().await?;
-        debug!("text: {:#?}", text);
+        let status = response.status();
+
+        if status == 401 {
+            spotify_client.refresh_auth_token().await?;
+
+            return self
+                .play_song_on_album(spotify_client, track_number, album_id)
+                .await;
+        }
 
         Ok(())
     }
