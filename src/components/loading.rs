@@ -1,7 +1,6 @@
 use ratatui::{
     layout::{Constraint, Layout},
     style::Color,
-    widgets::Paragraph,
     Frame,
 };
 

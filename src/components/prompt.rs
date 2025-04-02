@@ -1,8 +1,7 @@
 use ratatui::{
     crossterm::event::KeyEvent,
     layout::{Constraint, Layout},
-    style::{Color, Style},
-    widgets::Paragraph,
+    style::Color,
     Frame,
 };
 

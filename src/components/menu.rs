@@ -3,7 +3,7 @@ use std::usize;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Layout, Rect},
-    style::{Color, Style},
+    style::Color,
     widgets::Paragraph,
     Frame,
 };

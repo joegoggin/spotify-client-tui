@@ -2,7 +2,7 @@ use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Direction, Layout},
     style::{Color, Style},
-    widgets::{Gauge, Paragraph, Wrap},
+    widgets::Gauge,
     Frame,
 };
 
@@ -13,7 +13,6 @@ use crate::{
         config::Config,
         spotify::{client::SpotifyClient, now_playing::NowPlaying},
     },
-    layout::rect::get_centered_rect,
     widgets::paragraph::{
         create_centered_paragraph, create_left_aligned_paragraph, create_right_aligned_paragraph,
     },
