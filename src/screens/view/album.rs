@@ -8,6 +8,7 @@ use ratatui::{
 
 use crate::{
     components::{
+        loading::Loading,
         screen_block::ScreenBlock,
         spotify::{album_song_list::AlbumSongList, song_info_window::SongInfoWindow},
         Component,
@@ -73,14 +74,7 @@ impl Component for ViewAlbumScreen {
         ScreenBlock::new_with_color(self.get_title(), Color::Green).view(app, frame);
 
         if self.now_playing.album.is_empty() {
-            let paragraph = Paragraph::new("Loading ...").centered();
-
-            let chunks = Layout::default()
-                .margin(5)
-                .constraints(vec![Constraint::Min(1)])
-                .split(frame.area());
-
-            frame.render_widget(paragraph, chunks[0]);
+            Loading::default().view(app, frame);
             return;
         }
 
