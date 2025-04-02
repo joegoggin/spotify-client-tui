@@ -99,10 +99,22 @@ impl Song {
         artists_string
     }
 
+    pub fn get_song_lenth_string(&self) -> String {
+        self.milliseconds_to_string(self.song_length)
+    }
+
     pub fn is_empty(&self) -> bool {
         self.id == "".to_string()
             || self.artists.is_empty()
             || self.song_length == 0
             || self.track_number == 0
+    }
+
+    fn milliseconds_to_string(&self, ms: u64) -> String {
+        let total_seconds = ms / 1_000;
+        let minutes = total_seconds / 60;
+        let seconds = total_seconds % 60;
+
+        format!("{}:{:02}", minutes, seconds)
     }
 }

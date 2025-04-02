@@ -7,7 +7,11 @@ use ratatui::{
 };
 
 use crate::{
-    components::{screen_block::ScreenBlock, spotify::album::song_list::AlbumSongList, Component},
+    components::{
+        screen_block::ScreenBlock,
+        spotify::{album_song_list::AlbumSongList, song_info_window::SongInfoWindow},
+        Component,
+    },
     core::{
         app::App,
         config::Config,
@@ -25,6 +29,7 @@ use crate::{
 pub struct ViewAlbumScreen {
     now_playing: NowPlaying,
     song_list: AlbumSongList,
+    info_window: SongInfoWindow,
 }
 
 impl Default for ViewAlbumScreen {
@@ -32,6 +37,7 @@ impl Default for ViewAlbumScreen {
         Self {
             now_playing: NowPlaying::default(),
             song_list: AlbumSongList::default(),
+            info_window: SongInfoWindow::default(),
         }
     }
 }
@@ -97,53 +103,11 @@ impl Component for ViewAlbumScreen {
         );
         self.song_list.view(app, frame);
 
-        let song = &self.now_playing.album.songs[self.song_list.active_song_index];
-        let song_string = format!("Song: {}", song.name);
-        let artists_string = format!("Artists: {}", song.get_artists_string());
-        let album_string = format!("Album: {}", self.now_playing.album.name);
-        let year_string = format!("Year: {}", self.now_playing.album.year);
-        let disk_string = format!("Disk: {}", song.disk_number);
-        let track_string = format!("Track {}", song.track_number);
+        let song = self.now_playing.album.songs[self.song_list.active_song_index].clone();
 
-        let song_paragraph = Paragraph::new(song_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let artists_paragraph = Paragraph::new(artists_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let album_paragraph = Paragraph::new(album_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let year_paragraph = Paragraph::new(year_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let disk_paragraph = Paragraph::new(disk_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-        let track_paragraph = Paragraph::new(track_string)
-            .left_aligned()
-            .wrap(Wrap { trim: false });
-
-        let mut info_constraints = Vec::<Constraint>::new();
-
-        for _ in 0..7 {
-            info_constraints.push(Constraint::Min(5));
-        }
-
-        info_constraints.push(Constraint::Min(0));
-
-        let info_chunks = Layout::default()
-            .margin(1)
-            .direction(Direction::Vertical)
-            .constraints(info_constraints)
-            .split(chunks[1]);
-
-        frame.render_widget(song_paragraph, info_chunks[0]);
-        frame.render_widget(artists_paragraph, info_chunks[1]);
-        frame.render_widget(album_paragraph, info_chunks[2]);
-        frame.render_widget(year_paragraph, info_chunks[3]);
-        frame.render_widget(disk_paragraph, info_chunks[4]);
-        frame.render_widget(track_paragraph, info_chunks[5]);
+        self.info_window
+            .refresh(self.now_playing.album.clone(), song, &chunks[1]);
+        self.info_window.view(app, frame);
     }
 
     fn tick(&mut self, app: &mut App) -> AppResult<Option<Message>> {
