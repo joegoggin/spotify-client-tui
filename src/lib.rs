@@ -77,17 +77,6 @@ async fn handle_player_command(args: &Args, app: &mut App) -> AppResult<bool> {
     return Ok(false);
 }
 
-fn handle_error<T>(result: AppResult<T>) -> Option<Message> {
-    match result {
-        Ok(_) => None,
-        Err(error) => {
-            let new_screen = Box::new(ErrorScreen::new(error.to_string()));
-
-            Some(Message::ChangeScreen { new_screen })
-        }
-    }
-}
-
 pub async fn run() -> AppResult<()> {
     let args = Args::parse();
 
