@@ -1,21 +1,18 @@
 use clap::{Parser, Subcommand};
 use color_eyre::eyre::eyre;
 
-use crate::{
-    screens::{
-        devices::DevicesScreen,
-        library::LibraryScreen,
-        now_playing::NowPlayingScreen,
-        queue::QueueScreen,
-        search::SearchScreen,
-        view::{album::ViewAlbumScreen, artist::ViewArtistScreen},
-        Screen,
-    },
-    AppResult,
+use crate::screens::{
+    devices::DevicesScreen,
+    library::LibraryScreen,
+    now_playing::NowPlayingScreen,
+    queue::QueueScreen,
+    search::SearchScreen,
+    view::{album::ViewAlbumScreen, artist::ViewArtistScreen},
+    Screen,
 };
 
 use super::{
-    app::App,
+    app::{App, AppResult},
     spotify::{device::Device, player::SpotifyPlayer},
 };
 

@@ -11,7 +11,7 @@ use tokio::{
     sync::oneshot::{self, Sender},
 };
 
-use crate::{core::config::Config, AppResult};
+use crate::core::{app::AppResult, config::Config};
 
 #[derive(Deserialize)]
 struct CallbackQuery {

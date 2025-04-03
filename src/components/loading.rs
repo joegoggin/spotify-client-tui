@@ -6,9 +6,11 @@ use ratatui::{
 };
 
 use crate::{
-    core::{app::App, message::Message},
+    core::{
+        app::{App, AppResult},
+        message::Message,
+    },
     widgets::paragraph::create_centered_paragraph,
-    AppResult,
 };
 
 use super::Component;
@@ -38,7 +40,7 @@ impl Component for Loading {
         Ok(None)
     }
 
-    fn handle_key_press(&mut self, _: &mut App, _: KeyEvent) -> crate::AppResult<Option<Message>> {
+    fn handle_key_press(&mut self, _: &mut App, _: KeyEvent) -> AppResult<Option<Message>> {
         Ok(None)
     }
 }

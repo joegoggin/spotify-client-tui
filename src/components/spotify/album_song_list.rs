@@ -9,11 +9,10 @@ use ratatui::{
 use crate::{
     components::Component,
     core::{
-        app::App,
+        app::{App, AppResult},
         message::Message,
         spotify::{album::Album, song::Song},
     },
-    AppResult,
 };
 
 #[derive(Debug, Clone)]

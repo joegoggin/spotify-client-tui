@@ -7,7 +7,9 @@ use std::{
 
 use log::{set_boxed_logger, set_max_level, Level, LevelFilter, Log, Metadata, Record};
 
-use crate::{utils::directory::get_home_dir, AppResult};
+use crate::utils::directory::get_home_dir;
+
+use super::app::AppResult;
 
 struct Logger {
     file: Mutex<BufWriter<File>>,

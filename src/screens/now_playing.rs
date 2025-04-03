@@ -9,7 +9,7 @@ use ratatui::{
 use crate::{
     components::{loading::Loading, screen_block::ScreenBlock, Component},
     core::{
-        app::App,
+        app::{App, AppResult},
         config::Config,
         message::Message,
         spotify::{client::SpotifyClient, now_playing::NowPlaying},
@@ -17,7 +17,6 @@ use crate::{
     widgets::paragraph::{
         create_centered_paragraph, create_left_aligned_paragraph, create_right_aligned_paragraph,
     },
-    AppResult,
 };
 
 use super::{

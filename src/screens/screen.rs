@@ -6,11 +6,10 @@ use ratatui::crossterm::event::{self, Event};
 use crate::{
     components::Component,
     core::{
-        app::App,
+        app::{App, AppResult},
         message::Message,
         spotify::{device::Device, now_playing::NowPlaying},
     },
-    AppResult,
 };
 
 #[derive(ValueEnum, PartialEq, Debug, Clone)]

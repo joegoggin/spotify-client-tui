@@ -1,12 +1,15 @@
 use crate::{
     auth::server::AuthServer,
-    core::{app::App, clap::Args, spotify::player::SpotifyPlayer},
+    core::{
+        app::{App, AppResult},
+        clap::Args,
+        spotify::player::SpotifyPlayer,
+    },
     screens::{home::HomeScreen, Screen, ScreenType},
     utils::error::{
         handle_error, throw_no_device_error, throw_no_now_playing_error,
         throw_no_spotify_client_error,
     },
-    AppResult,
 };
 
 use super::Message;

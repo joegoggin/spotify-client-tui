@@ -8,12 +8,11 @@ use ratatui::{
 use crate::{
     components::Component,
     core::{
-        app::App,
+        app::{App, AppResult},
         message::Message,
         spotify::{album::Album, song::Song},
     },
     widgets::paragraph::create_left_aligned_paragraph,
-    AppResult,
 };
 
 #[derive(Debug, Clone)]
@@ -95,7 +94,7 @@ impl Component for SongInfoWindow {
         Ok(None)
     }
 
-    fn handle_key_press(&mut self, _: &mut App, _: KeyEvent) -> crate::AppResult<Option<Message>> {
+    fn handle_key_press(&mut self, _: &mut App, _: KeyEvent) -> AppResult<Option<Message>> {
         Ok(None)
     }
 }

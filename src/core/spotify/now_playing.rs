@@ -2,7 +2,7 @@ use async_recursion::async_recursion;
 use color_eyre::eyre::eyre;
 use serde_json::Value;
 
-use crate::{utils::value::GetOrDefault, AppResult};
+use crate::{core::app::AppResult, utils::value::GetOrDefault};
 
 use super::{album::Album, client::SpotifyClient, song::Song};
 

@@ -13,10 +13,12 @@ use crate::{
         screen_block::ScreenBlock,
         Component,
     },
-    core::{app::App, message::Message},
+    core::{
+        app::{App, AppResult},
+        message::Message,
+    },
     layout::rect::get_centered_rect,
     screens::{Screen, ScreenType},
-    AppResult,
 };
 
 #[derive(Clone)]
