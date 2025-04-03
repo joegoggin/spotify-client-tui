@@ -1,7 +1,10 @@
-use spotify_client_tui::{run, AppResult};
+use spotify_client_tui::{App, AppResult};
 
 #[tokio::main]
 async fn main() -> AppResult<()> {
-    run().await?;
+    let mut app = App::new()?;
+
+    app.run().await?;
+
     Ok(())
 }

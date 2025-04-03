@@ -8,9 +8,11 @@ use ratatui::{
 
 use crate::{
     components::Component,
-    core::{app::App, message::Message},
+    core::{
+        app::{App, AppResult},
+        message::Message,
+    },
     widgets::{block::create_titled_block, paragraph::create_paragraph_with_block},
-    AppResult,
 };
 
 use super::form::{FormMode, Input, InputValue};

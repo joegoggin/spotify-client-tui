@@ -2,7 +2,7 @@ use color_eyre::eyre::eyre;
 use dirs::home_dir;
 use log::error;
 
-use crate::AppResult;
+use crate::core::app::AppResult;
 
 pub fn get_home_dir() -> AppResult<String> {
     match home_dir() {

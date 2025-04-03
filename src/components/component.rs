@@ -1,8 +1,8 @@
 use ratatui::{crossterm::event::KeyEvent, Frame};
 
-use crate::{
-    core::{app::App, message::Message},
-    AppResult,
+use crate::core::{
+    app::{App, AppResult},
+    message::Message,
 };
 
 pub trait Component {

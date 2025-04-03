@@ -1,4 +1,7 @@
-use crate::{core::message::Message, screens::error::ErrorScreen, AppResult};
+use crate::{
+    core::{app::AppResult, message::Message},
+    screens::error::ErrorScreen,
+};
 
 pub fn handle_error<T>(result: AppResult<T>) -> Option<Message> {
     match result {

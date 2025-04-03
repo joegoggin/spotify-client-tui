@@ -1,11 +1,24 @@
+use clap::Parser;
 use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
 use crate::{
-    screens::{exit::ExitScreen, Screen},
-    AppResult,
+    auth::server::AuthServer,
+    screens::{
+        auth::create_config::CreateConfigFormScreen, error::ErrorScreen, exit::ExitScreen,
+        home::HomeScreen, Screen,
+    },
 };
 
-use super::{message::Message, spotify::client::SpotifyClient};
+use super::{
+    clap::Args,
+    config::Config,
+    logging::setup_logging,
+    message::{handler::MessageHandler, Message},
+    spotify::client::SpotifyClient,
+    tui::{init_terminal, install_panic_hook, restore_terminal},
+};
+
+pub type AppResult<T> = color_eyre::Result<T>;
 
 #[derive(Clone)]
 pub struct App {
@@ -23,6 +36,53 @@ impl App {
             spotify_client: None,
             default_key_press_enabled: true,
         })
+    }
+
+    pub async fn run(&mut self) -> AppResult<()> {
+        let args = Args::parse();
+
+        install_panic_hook();
+        setup_logging()?;
+
+        let config = Config::new()?;
+        let mut current_screen: Box<dyn Screen> = Box::new(HomeScreen::default());
+
+        if config.client_id.is_none() || config.redirect_uri.is_none() || config.scope.is_none() {
+            current_screen = Box::new(CreateConfigFormScreen::new(&config));
+        } else {
+            let result = SpotifyClient::new(config);
+
+            match result {
+                Ok(spotify_client) => self.spotify_client = Some(spotify_client),
+                Err(_) => {
+                    current_screen = Box::new(ErrorScreen::new("Failed to create Spotify client."))
+                }
+            }
+
+            if let Some(command) = args.command.clone() {
+                command.handle_command(self, &mut current_screen).await?;
+
+                if command.is_player_command() {
+                    return Ok(());
+                }
+            }
+        }
+
+        let mut terminal = init_terminal()?;
+        let mut auth_server = AuthServer::default();
+
+        while self.is_running {
+            terminal.draw(|frame| current_screen.view(&self, frame))?;
+
+            let mut message_handler =
+                MessageHandler::new(self, &mut current_screen, &mut auth_server, &args);
+
+            message_handler.handle_message().await?;
+        }
+
+        restore_terminal()?;
+
+        Ok(())
     }
 }
 

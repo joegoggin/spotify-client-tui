@@ -9,12 +9,14 @@ use ratatui::{
 };
 
 use crate::{
-    core::{app::App, message::Message},
+    core::{
+        app::{App, AppResult},
+        message::Message,
+    },
     widgets::{
         block::create_block,
         paragraph::{create_centered_paragraph, create_paragraph_with_block},
     },
-    AppResult,
 };
 
 use super::Component;

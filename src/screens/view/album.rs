@@ -13,7 +13,7 @@ use crate::{
         Component,
     },
     core::{
-        app::App,
+        app::{App, AppResult},
         config::Config,
         message::Message,
         spotify::{client::SpotifyClient, now_playing::NowPlaying},
@@ -23,7 +23,6 @@ use crate::{
         Screen, ScreenType,
     },
     widgets::block::create_block,
-    AppResult,
 };
 
 #[derive(Debug, Clone)]

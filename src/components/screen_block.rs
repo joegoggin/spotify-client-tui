@@ -1,6 +1,12 @@
 use ratatui::{crossterm::event::KeyEvent, layout::Alignment, style::Color, Frame};
 
-use crate::{core::app::App, widgets::block::create_titled_block, AppResult, Message};
+use crate::{
+    core::{
+        app::{App, AppResult},
+        message::Message,
+    },
+    widgets::block::create_titled_block,
+};
 
 use super::Component;
 

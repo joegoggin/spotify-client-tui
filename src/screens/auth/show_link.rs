@@ -7,12 +7,14 @@ use ratatui::{
 
 use crate::{
     components::{menu::Menu, screen_block::ScreenBlock, Component},
-    core::{app::App, message::Message},
+    core::{
+        app::{App, AppResult},
+        message::Message,
+    },
     layout::rect::get_centered_rect,
     screens::{Screen, ScreenType},
     utils::vec::ToStringVec,
     widgets::paragraph::{create_centered_paragraph, create_paragraph},
-    AppResult,
 };
 
 use super::enter_code::EnterAuthCodeScreen;

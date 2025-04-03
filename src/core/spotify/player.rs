@@ -3,7 +3,7 @@ use color_eyre::eyre::eyre;
 use log::error;
 use serde_json::{json, Value};
 
-use crate::AppResult;
+use crate::core::app::AppResult;
 
 use super::client::SpotifyClient;
 

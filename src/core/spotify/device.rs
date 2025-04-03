@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use async_recursion::async_recursion;
 use serde_json::{json, Value};
 
-use crate::{utils::value::GetOrDefault, AppResult};
+use crate::{core::app::AppResult, utils::value::GetOrDefault};
 
 use super::client::SpotifyClient;
 

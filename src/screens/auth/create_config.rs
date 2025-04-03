@@ -13,10 +13,14 @@ use crate::{
         screen_block::ScreenBlock,
         Component,
     },
-    core::{app::App, config::Config, message::Message, spotify::client::SpotifyClient},
+    core::{
+        app::{App, AppResult},
+        config::Config,
+        message::Message,
+        spotify::client::SpotifyClient,
+    },
     layout::rect::get_centered_rect,
     screens::{Screen, ScreenType},
-    AppResult,
 };
 
 use super::show_link::ShowAuthLinkScreen;

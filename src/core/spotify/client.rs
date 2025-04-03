@@ -12,7 +12,10 @@ use reqwest::{Client, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use crate::{core::config::Config, utils::directory::get_home_dir, AppResult};
+use crate::{
+    core::{app::AppResult, config::Config},
+    utils::directory::get_home_dir,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Credentials {

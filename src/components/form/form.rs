@@ -7,8 +7,10 @@ use ratatui::{
 
 use crate::{
     components::Component,
-    core::{app::App, message::Message},
-    AppResult,
+    core::{
+        app::{App, AppResult},
+        message::Message,
+    },
 };
 
 #[derive(Debug, Clone, PartialEq)]

@@ -6,7 +6,9 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 
-use crate::{utils::directory::get_home_dir, AppResult};
+use crate::utils::directory::get_home_dir;
+
+use super::app::AppResult;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct Config {
