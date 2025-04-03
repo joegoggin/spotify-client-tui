@@ -1,7 +1,6 @@
 use crate::{
     auth::server::AuthServer,
     core::{app::App, clap::Args, spotify::player::SpotifyPlayer},
-    handle_player_command, is_player_command,
     screens::{home::HomeScreen, Screen, ScreenType},
     utils::error::{
         handle_error, throw_no_device_error, throw_no_now_playing_error,
@@ -81,9 +80,13 @@ impl<'a> MessageHandler<'a> {
             }
         }
 
-        if new_screen.get_screen_type() == ScreenType::Home && is_player_command(self.args) {
-            self.app.is_running = false;
-            handle_player_command(self.args, &mut self.app).await?;
+        if let Some(command) = &self.args.command {
+            if new_screen.get_screen_type() == ScreenType::Home && command.is_player_command() {
+                self.app.is_running = false;
+                command
+                    .handle_command(&mut self.app, &mut self.current_screen)
+                    .await?;
+            }
         }
 
         *self.current_screen = new_screen;
