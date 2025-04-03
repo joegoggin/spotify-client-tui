@@ -1,10 +1,15 @@
 use ratatui::{
+    crossterm::event::KeyEvent,
     layout::{Constraint, Layout},
     style::Color,
     Frame,
 };
 
-use crate::{core::app::App, widgets::paragraph::create_centered_paragraph, AppResult, Message};
+use crate::{
+    core::{app::App, message::Message},
+    widgets::paragraph::create_centered_paragraph,
+    AppResult,
+};
 
 use super::Component;
 
@@ -33,11 +38,7 @@ impl Component for Loading {
         Ok(None)
     }
 
-    fn handle_key_press(
-        &mut self,
-        _: &mut App,
-        _: ratatui::crossterm::event::KeyEvent,
-    ) -> crate::AppResult<Option<crate::Message>> {
+    fn handle_key_press(&mut self, _: &mut App, _: KeyEvent) -> crate::AppResult<Option<Message>> {
         Ok(None)
     }
 }

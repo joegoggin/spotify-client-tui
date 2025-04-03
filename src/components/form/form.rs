@@ -5,7 +5,11 @@ use ratatui::{
     Frame,
 };
 
-use crate::{components::Component, core::app::App, AppResult, Message};
+use crate::{
+    components::Component,
+    core::{app::App, message::Message},
+    AppResult,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum FormMode {

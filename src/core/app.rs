@@ -2,10 +2,10 @@ use ratatui::crossterm::event::{KeyCode, KeyEvent};
 
 use crate::{
     screens::{exit::ExitScreen, Screen},
-    AppResult, Message,
+    AppResult,
 };
 
-use super::spotify::client::SpotifyClient;
+use super::{message::Message, spotify::client::SpotifyClient};
 
 #[derive(Clone)]
 pub struct App {

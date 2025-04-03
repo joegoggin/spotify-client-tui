@@ -6,8 +6,8 @@ use ratatui::{
 
 use crate::{
     components::{prompt::Prompt, Component},
-    core::app::App,
-    AppResult, Message,
+    core::{app::App, message::Message},
+    AppResult,
 };
 
 use super::{Screen, ScreenType};

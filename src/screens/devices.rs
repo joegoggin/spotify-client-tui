@@ -9,10 +9,11 @@ use crate::{
     core::{
         app::App,
         config::Config,
+        message::Message,
         spotify::{client::SpotifyClient, device::Device},
     },
     utils::vec::ToStringVec,
-    AppResult, Message,
+    AppResult,
 };
 
 use super::{
