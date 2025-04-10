@@ -7,8 +7,8 @@ use crate::{
     },
     screens::{home::HomeScreen, Screen, ScreenType},
     utils::error::{
-        handle_error, throw_no_device_error, throw_no_now_playing_error,
-        throw_no_spotify_client_error,
+        handle_error, throw_no_album_error, throw_no_device_error, throw_no_now_playing_error,
+        throw_no_song_error, throw_no_spotify_client_error,
     },
 };
 
@@ -62,6 +62,8 @@ impl<'a> MessageHandler<'a> {
                     track_number,
                     album_id,
                 } => self.play_song_on_album(track_number, album_id).await,
+                Message::RefreshSong => self.refresh_song().await,
+                Message::RefreshAlbum => self.refresh_album().await,
             };
 
             if self.current_message.is_some() {
@@ -242,6 +244,34 @@ impl<'a> MessageHandler<'a> {
 
                 handle_error(result)
             }
+            None => throw_no_spotify_client_error(),
+        }
+    }
+
+    async fn refresh_song(&mut self) -> Option<Message> {
+        match self.app.spotify_client.as_mut() {
+            Some(mut spotify_client) => match self.current_screen.get_song() {
+                Some(song) => {
+                    let result = song.refresh(&mut spotify_client).await;
+
+                    handle_error(result)
+                }
+                None => throw_no_song_error(),
+            },
+            None => throw_no_spotify_client_error(),
+        }
+    }
+
+    async fn refresh_album(&mut self) -> Option<Message> {
+        match self.app.spotify_client.as_mut() {
+            Some(mut spotify_client) => match self.current_screen.get_album() {
+                Some(album) => {
+                    let result = album.refresh(&mut spotify_client).await;
+
+                    handle_error(result)
+                }
+                None => throw_no_album_error(),
+            },
             None => throw_no_spotify_client_error(),
         }
     }

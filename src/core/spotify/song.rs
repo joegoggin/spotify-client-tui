@@ -9,7 +9,9 @@ use super::client::SpotifyClient;
 pub struct Song {
     pub id: String,
     pub name: String,
-    pub artists: Vec<String>,
+    pub artist_names: Vec<String>,
+    pub album_name: String,
+    pub album_year: String,
     pub song_length: u64,
     pub disk_number: u64,
     pub track_number: u64,
@@ -20,7 +22,9 @@ impl Default for Song {
         Self {
             id: String::new(),
             name: String::new(),
-            artists: vec![],
+            artist_names: vec![],
+            album_name: String::new(),
+            album_year: String::new(),
             song_length: 0,
             disk_number: 0,
             track_number: 0,
@@ -33,7 +37,9 @@ impl Song {
         Self {
             id,
             name: String::new(),
-            artists: vec![],
+            artist_names: vec![],
+            album_name: String::new(),
+            album_year: String::new(),
             song_length: 0,
             disk_number: 0,
             track_number: 0,
@@ -63,7 +69,9 @@ impl Song {
         let json = response.json::<Value>().await?;
 
         let name = json.get_string_or_default("name");
-        let mut artists = Vec::<String>::new();
+        let mut artist_names = Vec::<String>::new();
+        let mut album_name = String::new();
+        let mut album_year = String::new();
         let song_length = json.get_number_or_default("duration_ms");
         let disk_number = json.get_number_or_default("disc_number");
         let track_number = json.get_number_or_default("track_number");
@@ -73,11 +81,22 @@ impl Song {
         for artist_value in artists_array {
             let artist = artist_value.get_string_or_default("name");
 
-            artists.push(artist);
+            artist_names.push(artist);
+        }
+
+        if let Some(album) = json.get("album") {
+            album_name = album.get_string_or_default("name");
+            album_year = album.get_string_or_default("release_date");
+
+            if album_year.len() > 5 {
+                album_year = album_year[0..4].to_string();
+            }
         }
 
         self.name = name;
-        self.artists = artists;
+        self.artist_names = artist_names;
+        self.album_name = album_name;
+        self.album_year = album_year;
         self.disk_number = disk_number;
         self.song_length = song_length;
         self.track_number = track_number;
@@ -88,8 +107,8 @@ impl Song {
     pub fn get_artists_string(&self) -> String {
         let mut artists_string = String::new();
 
-        for (index, value) in self.artists.iter().enumerate() {
-            if index == self.artists.len() - 1 {
+        for (index, value) in self.artist_names.iter().enumerate() {
+            if index == self.artist_names.len() - 1 {
                 artists_string = artists_string + &format!("{}", value);
             } else {
                 artists_string = artists_string + &format!("{}, ", value);
@@ -99,13 +118,14 @@ impl Song {
         artists_string
     }
 
-    pub fn get_song_lenth_string(&self) -> String {
+    pub fn get_song_length_string(&self) -> String {
         self.milliseconds_to_string(self.song_length)
     }
 
     pub fn is_empty(&self) -> bool {
         self.id == "".to_string()
-            || self.artists.is_empty()
+            || self.artist_names.is_empty()
+            || self.album_name == "".to_string()
             || self.song_length == 0
             || self.track_number == 0
     }

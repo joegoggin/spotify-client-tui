@@ -6,11 +6,11 @@ use ratatui::{
 };
 
 use crate::{
-    components::Component,
+    components::{loading::Loading, Component},
     core::{
         app::{App, AppResult},
         message::Message,
-        spotify::{album::Album, song::Song},
+        spotify::song::Song,
     },
     widgets::paragraph::create_left_aligned_paragraph,
 };
@@ -18,41 +18,39 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct SongInfoWindow {
     pub song: Song,
-    pub album: Album,
-    pub area: Rect,
+    area: Rect,
 }
 
 impl Default for SongInfoWindow {
     fn default() -> Self {
         Self {
             song: Song::default(),
-            album: Album::default(),
             area: Rect::default(),
         }
     }
 }
 
 impl SongInfoWindow {
-    pub fn refresh(&mut self, album: Album, song: Song, area: &Rect) {
-        if album.id != self.album.id {
-            self.album = album;
-        }
-
-        if song.id != self.song.id {
-            self.song = song;
-        }
-
+    pub fn set_area(&mut self, area: &Rect) {
         self.area = area.to_owned();
     }
 }
 
 impl Component for SongInfoWindow {
-    fn view(&mut self, _: &App, frame: &mut Frame) {
+    fn view(&mut self, app: &App, frame: &mut Frame) {
+        if self.song.is_empty() {
+            let mut loading = Loading::default();
+
+            loading.set_area(&self.area);
+            loading.view(app, frame);
+            return;
+        }
+
         let song_string = format!("Song: {}", self.song.name);
         let artists_string = format!("Artists: {}", self.song.get_artists_string());
-        let album_string = format!("Album: {}", self.album.name);
-        let song_length_string = format!("Song Length: {}", self.song.get_song_lenth_string());
-        let year_string = format!("Year: {}", self.album.year);
+        let album_string = format!("Album: {}", self.song.album_name);
+        let song_length_string = format!("Song Length: {}", self.song.get_song_length_string());
+        let year_string = format!("Year: {}", self.song.album_year);
         let disk_string = format!("Disk: {}", self.song.disk_number);
         let track_string = format!("Track {}", self.song.track_number);
 

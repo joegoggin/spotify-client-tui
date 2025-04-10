@@ -7,57 +7,67 @@ use ratatui::{
 };
 
 use crate::{
-    components::Component,
+    components::{loading::Loading, Component},
     core::{
         app::{App, AppResult},
         message::Message,
-        spotify::{album::Album, song::Song},
+        spotify::album::Album,
     },
 };
 
 #[derive(Debug, Clone)]
 pub struct AlbumSongList {
     pub album: Album,
-    pub current_song: Song,
-    pub area: Rect,
-    pub max_songs_shown: u16,
-    pub active_song_index: usize,
-    pub song_start_index: usize,
-    pub song_end_index: usize,
+    pub current_song_id: String,
+    area: Rect,
+    max_songs_shown: u16,
+    active_song_index: usize,
+    song_start_index: usize,
+    song_end_index: usize,
+    album_changed: bool,
 }
 
 impl Default for AlbumSongList {
     fn default() -> Self {
         Self {
             album: Album::default(),
-            current_song: Song::default(),
+            current_song_id: String::new(),
             area: Rect::default(),
             max_songs_shown: 0,
             active_song_index: 0,
             song_start_index: 0,
             song_end_index: 0,
+            album_changed: false,
         }
     }
 }
 
 impl AlbumSongList {
-    pub fn refresh(&mut self, album: Album, song: Option<Song>, area: &Rect) {
-        if let Some(song) = song {
-            if song.id != self.current_song.id {
-                self.current_song = song;
-            }
-        }
+    pub fn set_area(&mut self, area: &Rect) {
+        let max_songs_shown = area.height - 2;
 
-        if album.id != self.album.id {
-            let max_songs_shown = area.height - 2;
+        self.area = area.to_owned();
+        self.max_songs_shown = max_songs_shown;
 
-            self.area = area.to_owned();
-            self.max_songs_shown = max_songs_shown;
+        if self.album_changed {
             self.song_end_index = max_songs_shown.into();
-            self.song_start_index = 0;
-            self.active_song_index = 0;
-            self.album = album;
+            self.album_changed = false;
         }
+    }
+
+    pub fn set_album_id(&mut self, album_id: String) {
+        self.album.id = album_id;
+        self.song_start_index = 0;
+        self.active_song_index = 0;
+        self.album_changed = true;
+    }
+
+    pub fn get_active_song_id(&self) -> String {
+        if !self.album.is_empty() {
+            return self.album.songs[self.active_song_index].1.clone();
+        }
+
+        "".to_string()
     }
 
     fn get_song_style(&self, index: usize) -> Style {
@@ -72,20 +82,28 @@ impl AlbumSongList {
 }
 
 impl Component for AlbumSongList {
-    fn view(&mut self, _: &App, frame: &mut Frame) {
+    fn view(&mut self, app: &App, frame: &mut Frame) {
+        if self.album.is_empty() {
+            let mut loading = Loading::default();
+
+            loading.set_area(&self.area);
+            loading.view(app, frame);
+            return;
+        }
+
         let mut song_constraits = Vec::<Constraint>::new();
         let mut song_paragraphs = Vec::<Paragraph>::new();
 
         for _ in 0..self.max_songs_shown {
-            song_constraits.push(Constraint::Max(1))
+            song_constraits.push(Constraint::Max(1));
         }
 
         for i in self.song_start_index..self.song_end_index {
             if i < self.album.total_songs as usize {
                 let song = &self.album.songs[i];
-                let mut song_string = format!("{}. {}", song.track_number, song.name);
+                let mut song_string = song.0.clone();
 
-                if song.id == self.current_song.id {
+                if song.1 == self.current_song_id {
                     song_string = format!("* {} *", song_string);
                 }
 
@@ -112,7 +130,7 @@ impl Component for AlbumSongList {
     }
 
     fn tick(&mut self, _: &mut App) -> AppResult<Option<Message>> {
-        todo!()
+        Ok(None)
     }
 
     fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
@@ -122,7 +140,6 @@ impl Component for AlbumSongList {
                     self.song_start_index = self.song_start_index + 1;
                     self.song_end_index = self.song_end_index + 1;
                 }
-
                 if self.active_song_index < self.album.songs.len() - 1 {
                     self.active_song_index = self.active_song_index + 1;
                 } else {
@@ -156,13 +173,10 @@ impl Component for AlbumSongList {
                 Ok(None)
             }
             KeyCode::Enter => {
-                let track_number = self.album.songs[self.active_song_index]
-                    .clone()
-                    .track_number;
                 let album_id = self.album.id.clone();
 
                 Ok(Some(Message::PlaySongOnAlbum {
-                    track_number,
+                    track_number: (self.active_song_index + 1) as u64,
                     album_id,
                 }))
             }

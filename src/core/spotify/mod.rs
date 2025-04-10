@@ -5,3 +5,4 @@ pub mod now_playing;
 pub mod player;
 pub mod song;
 
+pub type NameAndId = (String, String);

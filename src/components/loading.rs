@@ -1,6 +1,6 @@
 use ratatui::{
     crossterm::event::KeyEvent,
-    layout::{Constraint, Layout},
+    layout::{Constraint, Layout, Rect},
     style::Color,
     Frame,
 };
@@ -16,11 +16,21 @@ use crate::{
 use super::Component;
 
 #[derive(Debug, Clone)]
-pub struct Loading;
+pub struct Loading {
+    area: Rect,
+}
 
 impl Default for Loading {
     fn default() -> Self {
-        Self
+        Self {
+            area: Rect::default(),
+        }
+    }
+}
+
+impl Loading {
+    pub fn set_area(&mut self, area: &Rect) {
+        self.area = area.to_owned();
     }
 }
 
@@ -31,7 +41,7 @@ impl Component for Loading {
         let chunks = Layout::default()
             .margin(5)
             .constraints(vec![Constraint::Min(1)])
-            .split(frame.area());
+            .split(self.area);
 
         frame.render_widget(paragraph, chunks[0]);
     }

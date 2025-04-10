@@ -4,12 +4,13 @@ use serde_json::Value;
 
 use crate::{core::app::AppResult, utils::value::GetOrDefault};
 
-use super::{album::Album, client::SpotifyClient, song::Song};
+use super::client::SpotifyClient;
 
 #[derive(Debug, Clone)]
 pub struct NowPlaying {
-    pub song: Song,
-    pub album: Album,
+    pub song_id: String,
+    pub album_id: String,
+    pub artist_ids: Vec<String>,
     pub progress: u64,
     pub shuffle: bool,
 }
@@ -17,8 +18,9 @@ pub struct NowPlaying {
 impl Default for NowPlaying {
     fn default() -> Self {
         Self {
-            song: Song::default(),
-            album: Album::default(),
+            song_id: String::new(),
+            album_id: String::new(),
+            artist_ids: Vec::<String>::new(),
             progress: 0,
             shuffle: false,
         }
@@ -26,10 +28,6 @@ impl Default for NowPlaying {
 }
 
 impl NowPlaying {
-    pub fn get_song_length_string(&self) -> String {
-        Self::milliseconds_to_string(self.song.song_length)
-    }
-
     pub fn get_progress_string(&self) -> String {
         Self::milliseconds_to_string(self.progress)
     }
@@ -66,27 +64,31 @@ impl NowPlaying {
 
         let json = response.json::<Value>().await?;
 
+        let mut song_id = String::new();
+        let mut album_id = String::new();
+        let mut artist_ids = Vec::<String>::new();
         let progress = json.get_number_or_default("progress_ms");
         let shuffle = json.get_bool_or_default("shuffle_state");
 
         if let Some(item) = json.get("item") {
-            let song_id = item.get_string_or_default("id");
-
-            if song_id != self.song.id {
-                self.song.id = song_id;
-                self.song.refresh(spotify_client).await?;
-            }
+            song_id = item.get_string_or_default("id");
 
             if let Some(album_value) = item.get("album") {
-                let album_id = album_value.get_string_or_default("id");
+                album_id = album_value.get_string_or_default("id");
+            }
 
-                if album_id != self.album.id {
-                    self.album.id = album_id;
-                    self.album.refresh(spotify_client).await?;
-                }
+            let artists = item.get_array_or_default("artists");
+
+            for artist in artists {
+                let id = artist.get_string_or_default("id");
+
+                artist_ids.push(id);
             }
         }
 
+        self.song_id = song_id;
+        self.album_id = album_id;
+        self.artist_ids = artist_ids;
         self.progress = progress;
         self.shuffle = shuffle;
 
@@ -94,9 +96,9 @@ impl NowPlaying {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.song.is_empty()
-            || self.album.is_empty()
-            || self.song.song_length == 0
+        self.song_id == "".to_string()
+            || self.album_id == "".to_string()
+            || self.artist_ids.is_empty()
             || self.progress == 0
     }
 

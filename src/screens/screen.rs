@@ -8,7 +8,7 @@ use crate::{
     core::{
         app::{App, AppResult},
         message::Message,
-        spotify::{device::Device, now_playing::NowPlaying},
+        spotify::{album::Album, device::Device, now_playing::NowPlaying, song::Song},
     },
 };
 
@@ -61,6 +61,14 @@ pub trait Screen: ScreenClone + Component {
     }
 
     fn get_device(&mut self) -> Option<&mut Device> {
+        None
+    }
+
+    fn get_song(&mut self) -> Option<&mut Song> {
+        None
+    }
+
+    fn get_album(&mut self) -> Option<&mut Album> {
         None
     }
 }

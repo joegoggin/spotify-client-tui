@@ -23,8 +23,7 @@ use super::{
     now_playing::NowPlayingScreen,
     queue::QueueScreen,
     search::SearchScreen,
-    view::album::ViewAlbumScreen,
-    view::artist::ViewArtistScreen,
+    view::{album::ViewAlbumScreen, artist::ViewArtistScreen},
     Screen, ScreenType,
 };
 

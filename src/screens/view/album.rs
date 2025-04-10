@@ -14,14 +14,10 @@ use crate::{
     },
     core::{
         app::{App, AppResult},
-        config::Config,
         message::Message,
-        spotify::{client::SpotifyClient, now_playing::NowPlaying},
+        spotify::{album::Album, now_playing::NowPlaying, song::Song},
     },
-    screens::{
-        auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
-        Screen, ScreenType,
-    },
+    screens::{Screen, ScreenType},
     widgets::block::create_block,
 };
 
@@ -46,11 +42,11 @@ impl ViewAlbumScreen {
     fn get_title(&self) -> String {
         let mut title = "Veiw Album".to_string();
 
-        if !self.now_playing.album.is_empty() {
+        if !self.song_list.album.is_empty() {
             title = format!(
                 "{} - {}",
-                self.now_playing.album.name,
-                self.now_playing.album.get_first_artist()
+                self.song_list.album.name,
+                self.song_list.album.get_first_artist()
             )
         }
 
@@ -66,13 +62,21 @@ impl Screen for ViewAlbumScreen {
     fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
         Some(&mut self.now_playing)
     }
+
+    fn get_album(&mut self) -> Option<&mut Album> {
+        Some(&mut self.song_list.album)
+    }
+
+    fn get_song(&mut self) -> Option<&mut Song> {
+        Some(&mut self.info_window.song)
+    }
 }
 
 impl Component for ViewAlbumScreen {
     fn view(&mut self, app: &App, frame: &mut Frame) {
         ScreenBlock::new_with_color(self.get_title(), Color::Green).view(app, frame);
 
-        if self.now_playing.album.is_empty() {
+        if self.now_playing.is_empty() {
             Loading::default().view(app, frame);
             return;
         }
@@ -89,51 +93,33 @@ impl Component for ViewAlbumScreen {
         frame.render_widget(song_list_block.clone(), chunks[0]);
         frame.render_widget(info_block, chunks[1]);
 
-        self.song_list.refresh(
-            self.now_playing.album.clone(),
-            Some(self.now_playing.song.clone()),
-            &chunks[0],
-        );
+        self.song_list.set_area(&chunks[0]);
+        self.info_window.set_area(&chunks[1]);
+
         self.song_list.view(app, frame);
-
-        let song = self.now_playing.album.songs[self.song_list.active_song_index].clone();
-
-        self.info_window
-            .refresh(self.now_playing.album.clone(), song, &chunks[1]);
         self.info_window.view(app, frame);
     }
 
-    fn tick(&mut self, app: &mut App) -> AppResult<Option<Message>> {
-        match app.spotify_client.clone() {
-            Some(spotify_client) => {
-                if spotify_client.credentials.is_none() {
-                    let new_screen = Box::new(ShowAuthLinkScreen::new(spotify_client.auth_url));
-
-                    return Ok(Some(Message::ChangeScreen { new_screen }));
-                }
-
-                Ok(Some(Message::RefreshNowPlaying))
-            }
-            None => {
-                let config = Config::new()?;
-                let result = SpotifyClient::new(config.clone());
-
-                match result {
-                    Ok(spotify_client) => {
-                        app.spotify_client = Some(spotify_client);
-
-                        Ok(None)
-                    }
-                    Err(_) => {
-                        let new_screen = Box::new(CreateConfigFormScreen::new(&config));
-
-                        Ok(Some(Message::ChangeScreen { new_screen }))
-                    }
-                }
-            }
+    fn tick(&mut self, _: &mut App) -> AppResult<Option<Message>> {
+        if self.now_playing.song_id != self.song_list.current_song_id {
+            self.song_list.current_song_id = self.now_playing.song_id.clone();
         }
-    }
 
+        if self.song_list.get_active_song_id() != self.info_window.song.id {
+            self.info_window.song.id = self.song_list.get_active_song_id();
+
+            return Ok(Some(Message::RefreshSong));
+        }
+
+        if self.now_playing.album_id != self.song_list.album.id {
+            self.song_list
+                .set_album_id(self.now_playing.album_id.clone());
+
+            return Ok(Some(Message::RefreshAlbum));
+        }
+
+        Ok(Some(Message::RefreshNowPlaying))
+    }
     fn handle_key_press(&mut self, app: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
         self.song_list.handle_key_press(app, key)
     }
