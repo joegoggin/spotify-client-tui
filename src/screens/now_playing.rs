@@ -10,31 +10,27 @@ use crate::{
     components::{loading::Loading, screen_block::ScreenBlock, Component},
     core::{
         app::{App, AppResult},
-        config::Config,
         message::Message,
-        spotify::{client::SpotifyClient, now_playing::NowPlaying},
+        spotify::{now_playing::NowPlaying, song::Song},
     },
     widgets::paragraph::{
         create_centered_paragraph, create_left_aligned_paragraph, create_right_aligned_paragraph,
     },
 };
 
-use super::{
-    auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
-    queue::QueueScreen,
-    search::SearchScreen,
-    Screen, ScreenType,
-};
+use super::{queue::QueueScreen, search::SearchScreen, Screen, ScreenType};
 
 #[derive(Debug, Clone)]
 pub struct NowPlayingScreen {
     now_playing: NowPlaying,
+    song: Song,
 }
 
 impl Default for NowPlayingScreen {
     fn default() -> Self {
         Self {
             now_playing: NowPlaying::default(),
+            song: Song::default(),
         }
     }
 }
@@ -47,26 +43,30 @@ impl Screen for NowPlayingScreen {
     fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
         Some(&mut self.now_playing)
     }
+
+    fn get_song(&mut self) -> Option<&mut Song> {
+        Some(&mut self.song)
+    }
 }
 
 impl Component for NowPlayingScreen {
     fn view(&mut self, app: &App, frame: &mut Frame) {
         ScreenBlock::new_with_color("Now Playing", Color::Green).view(app, frame);
 
-        if self.now_playing.is_empty() {
+        if self.now_playing.is_empty() || self.song.is_empty() {
             Loading::default().view(app, frame);
             return;
         }
 
-        let song_string = format!("Song: {}", self.now_playing.song.name);
+        let song_string = format!("Song: {}", self.song.name);
         let mut artist_string = "Artists: ".to_string();
-        let album_string = format!("Album: {}", self.now_playing.album.name);
+        let album_string = format!("Album: {}", self.song.album_name);
         let progress_string = self.now_playing.get_progress_string();
-        let song_length_string = self.now_playing.get_song_length_string();
+        let song_length_string = self.song.get_song_length_string();
         let shuffle_string = self.now_playing.get_shuffle_string();
 
-        for (index, value) in self.now_playing.song.artists.iter().enumerate() {
-            if index == self.now_playing.song.artists.len() - 1 {
+        for (index, value) in self.song.artist_names.iter().enumerate() {
+            if index == self.song.artist_names.len() - 1 {
                 artist_string = artist_string + &format!("{}", value);
             } else {
                 artist_string = artist_string + &format!("{}, ", value);
@@ -83,7 +83,7 @@ impl Component for NowPlayingScreen {
         let shuffle_paragraph = create_centered_paragraph(&shuffle_string, Some(Color::Green));
 
         let progress_float: f64 = self.now_playing.progress as f64;
-        let song_length_float: f64 = self.now_playing.song.song_length as f64;
+        let song_length_float: f64 = self.song.song_length as f64;
         let percent: u16 = ((progress_float / song_length_float) * 100.0) as u16;
 
         let progress_bar_gauge = Gauge::default()
@@ -123,35 +123,14 @@ impl Component for NowPlayingScreen {
         frame.render_widget(shuffle_paragraph, chuncks[7]);
     }
 
-    fn tick(&mut self, app: &mut App) -> AppResult<Option<Message>> {
-        match app.spotify_client.clone() {
-            Some(spotify_client) => {
-                if spotify_client.credentials.is_none() {
-                    let new_screen = Box::new(ShowAuthLinkScreen::new(spotify_client.auth_url));
+    fn tick(&mut self, _: &mut App) -> AppResult<Option<Message>> {
+        if self.now_playing.song_id != self.song.id {
+            self.song.id = self.now_playing.song_id.clone();
 
-                    return Ok(Some(Message::ChangeScreen { new_screen }));
-                }
-
-                Ok(Some(Message::RefreshNowPlaying))
-            }
-            None => {
-                let config = Config::new()?;
-                let result = SpotifyClient::new(config.clone());
-
-                match result {
-                    Ok(spotify_client) => {
-                        app.spotify_client = Some(spotify_client);
-
-                        Ok(None)
-                    }
-                    Err(_) => {
-                        let new_screen = Box::new(CreateConfigFormScreen::new(&config));
-
-                        Ok(Some(Message::ChangeScreen { new_screen }))
-                    }
-                }
-            }
+            return Ok(Some(Message::RefreshSong));
         }
+
+        Ok(Some(Message::RefreshNowPlaying))
     }
 
     fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {

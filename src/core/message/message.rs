@@ -14,4 +14,6 @@ pub enum Message {
     RefreshDevice,
     SetDevice { name: String, id: String },
     PlaySongOnAlbum { track_number: u64, album_id: String },
+    RefreshSong,
+    RefreshAlbum,
 }
