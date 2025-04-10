@@ -2,8 +2,13 @@ use clap::{Parser, Subcommand};
 use color_eyre::eyre::eyre;
 
 use crate::screens::{
-    devices::DevicesScreen, library::LibraryScreen, queue::QueueScreen, search::SearchScreen,
-    view::artist::ViewArtistScreen, Screen,
+    devices::DevicesScreen,
+    library::LibraryScreen,
+    now_playing::NowPlayingScreen,
+    queue::QueueScreen,
+    search::SearchScreen,
+    view::{album::ViewAlbumScreen, artist::ViewArtistScreen},
+    Screen,
 };
 
 use super::{
@@ -62,13 +67,13 @@ impl Command {
                 player_command.handle_command(app).await?;
             }
             Command::NowPlaying => {
-                // app.history.prev.push(current_screen.clone_box());
-                // *current_screen = Box::new(NowPlayingScreen::default());
+                app.history.prev.push(current_screen.clone_box());
+                *current_screen = Box::new(NowPlayingScreen::default());
             }
             Command::View { view_command } => match view_command {
                 ViewCommand::Album => {
-                    //     app.history.prev.push(current_screen.clone_box());
-                    //     *current_screen = Box::new(ViewAlbumScreen::default());
+                    app.history.prev.push(current_screen.clone_box());
+                    *current_screen = Box::new(ViewAlbumScreen::default());
                 }
                 ViewCommand::Artist => {
                     app.history.prev.push(current_screen.clone_box());
