@@ -10,7 +10,7 @@ use crate::{
         app::{App, AppResult},
         config::Config,
         message::Message,
-        spotify::{client::SpotifyClient, now_playing::NowPlaying},
+        spotify::client::SpotifyClient,
     },
     utils::vec::ToStringVec,
 };
@@ -30,7 +30,6 @@ use super::{
 #[derive(Clone)]
 pub struct HomeScreen {
     menu: Menu,
-    now_playing: NowPlaying,
 }
 
 impl Default for HomeScreen {
@@ -47,7 +46,6 @@ impl Default for HomeScreen {
 
         Self {
             menu: Menu::new(menu_items.to_string_vec()),
-            now_playing: NowPlaying::default(),
         }
     }
 }
@@ -55,10 +53,6 @@ impl Default for HomeScreen {
 impl Screen for HomeScreen {
     fn get_screen_type(&self) -> ScreenType {
         ScreenType::Home
-    }
-
-    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
-        Some(&mut self.now_playing)
     }
 }
 
