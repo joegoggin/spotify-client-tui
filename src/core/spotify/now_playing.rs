@@ -41,25 +41,11 @@ impl NowPlaying {
 
     #[async_recursion]
     pub async fn refresh(&mut self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
-        let auth_header = spotify_client.get_auth_header()?;
-
-        let response = spotify_client
-            .http_client
-            .get("https://api.spotify.com/v1/me/player")
-            .header("Authorization", auth_header)
-            .send()
-            .await?;
-
+        let response = spotify_client.get("me/player").await?;
         let status = response.status();
 
         if status == 204 {
             return Err(eyre!("No device available"));
-        }
-
-        if status == 401 {
-            spotify_client.refresh_auth_token().await?;
-
-            return self.refresh(spotify_client).await;
         }
 
         let json = response.json::<Value>().await?;

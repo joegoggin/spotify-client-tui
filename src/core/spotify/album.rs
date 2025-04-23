@@ -42,24 +42,8 @@ impl Album {
 
     #[async_recursion]
     pub async fn refresh(&mut self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
-        let auth_header = spotify_client.get_auth_header()?;
-        let url = format!("https://api.spotify.com/v1/albums/{}", self.id);
-
-        let response = spotify_client
-            .http_client
-            .get(url)
-            .header("Authorization", auth_header)
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        if status == 401 {
-            spotify_client.refresh_auth_token().await?;
-
-            return self.refresh(spotify_client).await;
-        }
-
+        let url = format!("albums/{}", self.id);
+        let response = spotify_client.get(&url).await?;
         let json = response.json::<Value>().await?;
 
         let name = json.get_string_or_default("name");

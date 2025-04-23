@@ -5,10 +5,11 @@ use std::{
     path::Path,
 };
 
+use async_recursion::async_recursion;
 use base64::{engine::general_purpose, Engine};
 use color_eyre::eyre::eyre;
 use log::error;
-use reqwest::{Client, Url};
+use reqwest::{Client, Response, Url};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -248,6 +249,91 @@ impl SpotifyClient {
                 Err(eyre!(error_message))
             }
         }
+    }
+
+    #[async_recursion]
+    pub async fn get(&mut self, route: &str) -> AppResult<Response> {
+        let auth_header = self.get_auth_header()?;
+        let url = format!("https://api.spotify.com/v1/{}", route);
+
+        let response = self
+            .http_client
+            .get(url)
+            .header("Authorization", auth_header)
+            .send()
+            .await?;
+
+        let status = response.status();
+
+        if status == 401 {
+            self.refresh_auth_token().await?;
+
+            return self.get(route).await;
+        }
+
+        Ok(response)
+    }
+
+    #[async_recursion]
+    pub async fn put(&mut self, route: &str, body: Option<&Value>) -> AppResult<Response> {
+        let auth_header = self.get_auth_header()?;
+        let url = format!("https://api.spotify.com/v1/{}", route);
+
+        let mut request = self
+            .http_client
+            .put(&url)
+            .header("Authorization", auth_header);
+
+        match body {
+            Some(body) => {
+                request = request.json(body);
+            }
+            None => {
+                request = request.header("Content-Length", 0);
+            }
+        }
+
+        let response = request.send().await?;
+        let status = response.status();
+
+        if status == 401 {
+            self.refresh_auth_token().await?;
+
+            return self.put(route, body).await;
+        }
+
+        Ok(response)
+    }
+
+    #[async_recursion]
+    pub async fn post(&mut self, route: &str, body: Option<&Value>) -> AppResult<Response> {
+        let auth_header = self.get_auth_header()?;
+        let url = format!("https://api.spotify.com/v1/{}", route);
+
+        let mut request = self
+            .http_client
+            .post(&url)
+            .header("Authorization", auth_header);
+
+        match body {
+            Some(body) => {
+                request = request.json(body);
+            }
+            None => {
+                request = request.header("Content-Length", 0);
+            }
+        }
+
+        let response = request.send().await?;
+        let status = response.status();
+
+        if status == 401 {
+            self.refresh_auth_token().await?;
+
+            return self.put(route, body).await;
+        }
+
+        Ok(response)
     }
 
     fn get_file_path() -> AppResult<String> {
