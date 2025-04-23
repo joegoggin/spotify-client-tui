@@ -103,7 +103,10 @@ impl<'a> MessageHandler<'a> {
     fn go_to_prev_screen(&mut self) -> Option<Message> {
         if let Some(last_screen) = self.app.history.prev.pop() {
             if self.current_screen.get_screen_type() != ScreenType::Exit {
-                self.app.history.next.push(self.current_screen.clone_box());
+                self.app
+                    .history
+                    .next
+                    .push(self.current_screen.clone_screen_box());
             }
 
             *self.current_screen = last_screen;
@@ -115,7 +118,10 @@ impl<'a> MessageHandler<'a> {
     fn go_to_next_screen(&mut self) -> Option<Message> {
         if let Some(next_screen) = self.app.history.next.pop() {
             if self.current_screen.get_screen_type() != ScreenType::Exit {
-                self.app.history.prev.push(self.current_screen.clone_box())
+                self.app
+                    .history
+                    .prev
+                    .push(self.current_screen.clone_screen_box())
             }
 
             *self.current_screen = next_screen;

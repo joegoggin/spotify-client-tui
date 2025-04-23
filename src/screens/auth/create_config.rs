@@ -112,10 +112,10 @@ impl Component for CreateConfigFormScreen {
             ])
             .split(rect);
 
-        self.form.inputs[0].set_area(Some(menu_chunks[0]));
-        self.form.inputs[1].set_area(Some(menu_chunks[1]));
-        self.form.inputs[2].set_area(Some(menu_chunks[2]));
-        self.form.inputs[3].set_area(Some(menu_chunks[3]));
+        self.form.inputs[0].set_area(menu_chunks[0]);
+        self.form.inputs[1].set_area(menu_chunks[1]);
+        self.form.inputs[2].set_area(menu_chunks[2]);
+        self.form.inputs[3].set_area(menu_chunks[3]);
 
         self.form.view(app, frame);
     }

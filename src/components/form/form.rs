@@ -1,16 +1,13 @@
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
-    layout::Rect,
     style::Color,
     Frame,
 };
 
 use crate::{
     components::Component,
-    core::{
-        app::{App, AppResult},
-        message::Message,
-    },
+    core::{app::App, message::Message},
+    AppResult,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -56,7 +53,6 @@ pub trait Input: InputClone + Component {
     fn set_is_focused(&mut self, focus: bool);
     fn get_mode(&self) -> FormMode;
     fn set_mode(&mut self, mode: FormMode);
-    fn set_area(&mut self, area: Option<Rect>);
     fn get_value(&self) -> InputValue;
 }
 

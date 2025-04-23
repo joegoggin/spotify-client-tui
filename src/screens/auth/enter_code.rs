@@ -60,7 +60,7 @@ impl Component for EnterAuthCodeScreen {
             .constraints(vec![Constraint::Max(3)])
             .split(rect);
 
-        self.form.inputs[0].set_area(Some(menu_chunks[0]));
+        self.form.inputs[0].set_area(menu_chunks[0]);
 
         self.form.view(app, frame);
     }
