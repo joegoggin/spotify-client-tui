@@ -25,22 +25,8 @@ impl Default for Device {
 impl Device {
     #[async_recursion]
     pub async fn refresh(&mut self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
-        let auth_header = spotify_client.get_auth_header()?;
-
-        let response = spotify_client
-            .http_client
-            .get("https://api.spotify.com/v1/me/player/devices")
-            .header("Authorization", auth_header)
-            .send()
-            .await?;
-
+        let response = spotify_client.get("me/player/devices").await?;
         let status = response.status();
-
-        if status == 401 {
-            spotify_client.refresh_auth_token().await?;
-
-            return self.refresh(spotify_client).await;
-        }
 
         if status == 200 {
             let mut available_devices = HashMap::new();
@@ -89,50 +75,20 @@ impl Device {
         spotify_client: &mut SpotifyClient,
         device_id: String,
     ) -> AppResult<()> {
-        let auth_header = spotify_client.get_auth_header()?;
-
         let body = json!({
             "device_ids": [&device_id],
             "play": true,
         });
 
-        let response = spotify_client
-            .http_client
-            .put("https://api.spotify.com/v1/me/player")
-            .header("Authorization", auth_header)
-            .json(&body)
-            .send()
-            .await?;
-
-        let status = response.status();
-
-        if status == 401 {
-            spotify_client.refresh_auth_token().await?;
-
-            return self.set_current_device(spotify_client, device_id).await;
-        }
+        spotify_client.put("me/player", Some(&body)).await?;
 
         Ok(())
     }
 
     #[async_recursion]
     pub async fn print_devices(&self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
-        let auth_header = spotify_client.get_auth_header()?;
-
-        let response = spotify_client
-            .http_client
-            .get("https://api.spotify.com/v1/me/player/devices")
-            .header("Authorization", auth_header)
-            .send()
-            .await?;
-
+        let response = spotify_client.get("me/player/devices").await?;
         let status = response.status();
-
-        if status == 401 {
-            spotify_client.refresh_auth_token().await?;
-
-            return self.print_devices(spotify_client).await;
-        }
 
         if status == 200 {
             let response_json = response.json::<Value>().await?;
