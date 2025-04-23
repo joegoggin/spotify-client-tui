@@ -1,5 +1,9 @@
 use log::debug;
-use ratatui::{crossterm::event::KeyEvent, style::Color, Frame};
+use ratatui::{
+    crossterm::event::{KeyCode, KeyEvent},
+    style::Color,
+    Frame,
+};
 
 use crate::{
     components::{screen_block::ScreenBlock, Component},
@@ -7,7 +11,7 @@ use crate::{
         app::{App, AppResult},
         config::Config,
         message::Message,
-        spotify::client::SpotifyClient,
+        spotify::{artist::Artist, client::SpotifyClient, now_playing::NowPlaying},
     },
     screens::{
         auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
@@ -16,17 +20,31 @@ use crate::{
 };
 
 #[derive(Clone)]
-pub struct ViewArtistScreen;
+pub struct ViewArtistScreen {
+    now_playing: NowPlaying,
+    artist: Artist,
+}
 
 impl Default for ViewArtistScreen {
     fn default() -> Self {
-        Self
+        Self {
+            now_playing: NowPlaying::default(),
+            artist: Artist::default(),
+        }
     }
 }
 
 impl Screen for ViewArtistScreen {
     fn get_screen_type(&self) -> ScreenType {
         ScreenType::ViewArtistScreen
+    }
+
+    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
+        Some(&mut self.now_playing)
+    }
+
+    fn get_artist(&mut self) -> Option<&mut Artist> {
+        Some(&mut self.artist)
     }
 }
 
@@ -35,39 +53,20 @@ impl Component for ViewArtistScreen {
         ScreenBlock::new_with_color("View Artist", Color::Green).view(app, frame);
     }
 
-    fn tick(&mut self, app: &mut App) -> AppResult<Option<Message>> {
-        match app.spotify_client.clone() {
-            Some(spotify_client) => {
-                if spotify_client.credentials.is_none() {
-                    let new_screen = Box::new(ShowAuthLinkScreen::new(spotify_client.auth_url));
-
-                    return Ok(Some(Message::ChangeScreen { new_screen }));
-                }
-
-                Ok(None)
-            }
-            None => {
-                let config = Config::new()?;
-                let result = SpotifyClient::new(config.clone());
-
-                match result {
-                    Ok(spotify_client) => {
-                        app.spotify_client = Some(spotify_client);
-
-                        Ok(None)
-                    }
-                    Err(_) => {
-                        let new_screen = Box::new(CreateConfigFormScreen::new(&config));
-
-                        Ok(Some(Message::ChangeScreen { new_screen }))
-                    }
-                }
+    fn tick(&mut self, _: &mut App) -> AppResult<Option<Message>> {
+        if !self.now_playing.is_empty() {
+            if self.now_playing.artist_ids[0] != self.artist.id {
+                self.artist.id = self.now_playing.artist_ids[0].clone();
             }
         }
+
+        Ok(Some(Message::RefreshNowPlaying))
     }
 
     fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
-        debug!("{:#?}", key);
-        Ok(None)
+        match key.code {
+            KeyCode::Enter => Ok(Some(Message::RefreshArtist)),
+            _ => Ok(None),
+        }
     }
 }

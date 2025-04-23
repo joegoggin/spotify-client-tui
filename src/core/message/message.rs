@@ -16,4 +16,5 @@ pub enum Message {
     PlaySongOnAlbum { track_number: u64, album_id: String },
     RefreshSong,
     RefreshAlbum,
+    RefreshArtist,
 }

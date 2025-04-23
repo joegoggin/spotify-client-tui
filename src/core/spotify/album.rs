@@ -1,4 +1,3 @@
-use async_recursion::async_recursion;
 use serde_json::Value;
 
 use crate::{core::app::AppResult, utils::value::GetOrDefault};
@@ -40,7 +39,6 @@ impl Album {
         }
     }
 
-    #[async_recursion]
     pub async fn refresh(&mut self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
         let url = format!("albums/{}", self.id);
         let response = spotify_client.get(&url).await?;
