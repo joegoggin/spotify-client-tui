@@ -47,6 +47,20 @@ impl Default for ViewArtistScreen {
     }
 }
 
+impl ViewArtistScreen {
+    fn get_title(&self) -> String {
+        let mut title = "View Artist".to_string();
+
+        if let Some(componet) = self.tabbed_view.clone().get_active_component() {
+            if let Some(artist) = componet.get_artist() {
+                title = format!("{}", artist.name)
+            }
+        }
+
+        title
+    }
+}
+
 impl Screen for ViewArtistScreen {
     fn get_screen_type(&self) -> ScreenType {
         ScreenType::ViewArtistScreen
@@ -55,7 +69,7 @@ impl Screen for ViewArtistScreen {
 
 impl Component for ViewArtistScreen {
     fn view(&mut self, app: &App, frame: &mut Frame) {
-        ScreenBlock::new_with_color("View Artist", Color::Green).view(app, frame);
+        ScreenBlock::new_with_color(self.get_title(), Color::Green).view(app, frame);
 
         self.tabbed_view.view(app, frame);
     }
