@@ -6,7 +6,16 @@ use ratatui::{
     Frame,
 };
 
-use crate::{components::Component, core::message::Message, App, AppResult};
+use crate::{
+    components::Component,
+    core::{
+        message::Message,
+        spotify::{
+            album::Album, artist::Artist, device::Device, now_playing::NowPlaying, song::Song,
+        },
+    },
+    App, AppResult,
+};
 
 use super::tab::Tab;
 
@@ -33,7 +42,7 @@ impl TabbedView {
         }
     }
 
-    fn get_active_component(&mut self) -> Option<&mut Box<dyn Component>> {
+    pub fn get_active_component(&mut self) -> Option<&mut Box<dyn Component>> {
         if self.active_tab < self.tabs.len() {
             return Some(&mut self.tabs[self.active_tab].component);
         }
@@ -66,7 +75,11 @@ impl Component for TabbedView {
 
         let verticle_chunks = Layout::default()
             .margin(2)
-            .constraints(vec![Constraint::Max(1), Constraint::Min(1)])
+            .constraints(vec![
+                Constraint::Max(1),
+                Constraint::Max(1),
+                Constraint::Min(1),
+            ])
             .split(frame.area());
 
         let horizontal_chunks = Layout::default()
@@ -79,7 +92,7 @@ impl Component for TabbedView {
         }
 
         if let Some(component) = self.get_active_component() {
-            component.set_area(verticle_chunks[1]);
+            component.set_area(verticle_chunks[2]);
             component.view(app, frame);
         }
     }
@@ -106,5 +119,40 @@ impl Component for TabbedView {
         }
 
         Ok(None)
+    }
+
+    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
+        match self.get_active_component() {
+            Some(component) => component.get_now_playing(),
+            None => None,
+        }
+    }
+
+    fn get_device(&mut self) -> Option<&mut Device> {
+        match self.get_active_component() {
+            Some(component) => component.get_device(),
+            None => None,
+        }
+    }
+
+    fn get_song(&mut self) -> Option<&mut Song> {
+        match self.get_active_component() {
+            Some(component) => component.get_song(),
+            None => None,
+        }
+    }
+
+    fn get_album(&mut self) -> Option<&mut Album> {
+        match self.get_active_component() {
+            Some(component) => component.get_album(),
+            None => None,
+        }
+    }
+
+    fn get_artist(&mut self) -> Option<&mut Artist> {
+        match self.get_active_component() {
+            Some(component) => component.get_artist(),
+            None => None,
+        }
     }
 }

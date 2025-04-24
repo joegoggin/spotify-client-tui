@@ -3,6 +3,7 @@ use log::error;
 use serde_json::{json, Value};
 
 use crate::core::app::AppResult;
+use crate::core::spotify::NameAndId;
 
 use super::client::SpotifyClient;
 
@@ -27,6 +28,27 @@ impl SpotifyPlayer {
             "offset": {
                 "position": position,
             }
+        });
+
+        spotify_client.put("me/player/play", Some(&body)).await?;
+
+        Ok(())
+    }
+
+    pub async fn play_songs(
+        &self,
+        spotify_client: &mut SpotifyClient,
+        offset: usize,
+        songs: Vec<NameAndId>,
+    ) -> AppResult<()> {
+        let mut uris: Vec<String> = vec![];
+
+        for i in offset..songs.len() {
+            uris.push(format!("spotify:track:{}", songs[i as usize].1));
+        }
+
+        let body = json!({
+            "uris": uris,
         });
 
         spotify_client.put("me/player/play", Some(&body)).await?;

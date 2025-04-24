@@ -1,19 +1,34 @@
+use crate::core::spotify::NameAndId;
 use crate::screens::Screen;
 
 #[derive(Clone)]
 pub enum Message {
-    ChangeScreen { new_screen: Box<dyn Screen> },
+    ChangeScreen {
+        new_screen: Box<dyn Screen>,
+    },
     GoToPrevScreen,
     GoToNextScreen,
     RefreshNowPlaying,
-    SetAuthCode { code: String },
+    SetAuthCode {
+        code: String,
+    },
     PausePlay,
     Shuffle,
     NextSong,
     PrevSong,
     RefreshDevice,
-    SetDevice { name: String, id: String },
-    PlaySongOnAlbum { track_number: u64, album_id: String },
+    SetDevice {
+        name: String,
+        id: String,
+    },
+    PlaySongOnAlbum {
+        track_number: u64,
+        album_id: String,
+    },
+    PlaySongs {
+        offset: usize,
+        songs: Vec<NameAndId>,
+    },
     RefreshSong,
     RefreshAlbum,
     RefreshArtist,

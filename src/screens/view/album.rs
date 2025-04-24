@@ -58,18 +58,6 @@ impl Screen for ViewAlbumScreen {
     fn get_screen_type(&self) -> ScreenType {
         ScreenType::ViewAlbumScreen
     }
-
-    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
-        Some(&mut self.now_playing)
-    }
-
-    fn get_album(&mut self) -> Option<&mut Album> {
-        Some(&mut self.song_list.album)
-    }
-
-    fn get_song(&mut self) -> Option<&mut Song> {
-        Some(&mut self.info_window.song)
-    }
 }
 
 impl Component for ViewAlbumScreen {
@@ -120,7 +108,20 @@ impl Component for ViewAlbumScreen {
 
         Ok(Some(Message::RefreshNowPlaying))
     }
+
     fn handle_key_press(&mut self, app: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
         self.song_list.handle_key_press(app, key)
+    }
+
+    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
+        Some(&mut self.now_playing)
+    }
+
+    fn get_album(&mut self) -> Option<&mut Album> {
+        Some(&mut self.song_list.album)
+    }
+
+    fn get_song(&mut self) -> Option<&mut Song> {
+        Some(&mut self.info_window.song)
     }
 }

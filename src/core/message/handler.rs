@@ -3,7 +3,7 @@ use crate::{
     core::{
         app::{App, AppResult},
         clap::Args,
-        spotify::player::SpotifyPlayer,
+        spotify::{player::SpotifyPlayer, NameAndId},
     },
     screens::{home::HomeScreen, Screen, ScreenType},
     utils::error::{
@@ -62,6 +62,7 @@ impl<'a> MessageHandler<'a> {
                     track_number,
                     album_id,
                 } => self.play_song_on_album(track_number, album_id).await,
+                Message::PlaySongs { offset, songs } => self.play_songs(offset, songs).await,
                 Message::RefreshSong => self.refresh_song().await,
                 Message::RefreshAlbum => self.refresh_album().await,
                 Message::RefreshArtist => self.refresh_artist().await,
@@ -248,6 +249,18 @@ impl<'a> MessageHandler<'a> {
                 let result = player
                     .play_song_on_album(&mut spotify_client, track_number, album_id)
                     .await;
+
+                handle_error(result)
+            }
+            None => throw_no_spotify_client_error(),
+        }
+    }
+
+    async fn play_songs(&mut self, offset: usize, songs: Vec<NameAndId>) -> Option<Message> {
+        match self.app.spotify_client.as_mut() {
+            Some(mut spotify_client) => {
+                let player = SpotifyPlayer::new();
+                let result = player.play_songs(&mut spotify_client, offset, songs).await;
 
                 handle_error(result)
             }

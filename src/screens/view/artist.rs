@@ -16,15 +16,13 @@ use crate::{
     core::{
         app::{App, AppResult},
         message::Message,
-        spotify::{artist::Artist, now_playing::NowPlaying},
+        spotify::{artist::Artist, now_playing::NowPlaying, song::Song},
     },
     screens::{Screen, ScreenType},
 };
 
 #[derive(Clone)]
 pub struct ViewArtistScreen {
-    now_playing: NowPlaying,
-    artist: Artist,
     tabbed_view: TabbedView,
 }
 
@@ -44,8 +42,6 @@ impl Default for ViewArtistScreen {
         tabs.push(Tab::new("Singles", KeyCode::Char('3'), Box::new(singles)));
 
         Self {
-            now_playing: NowPlaying::default(),
-            artist: Artist::default(),
             tabbed_view: TabbedView::new(tabs),
         }
     }
@@ -54,14 +50,6 @@ impl Default for ViewArtistScreen {
 impl Screen for ViewArtistScreen {
     fn get_screen_type(&self) -> ScreenType {
         ScreenType::ViewArtistScreen
-    }
-
-    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
-        Some(&mut self.now_playing)
-    }
-
-    fn get_artist(&mut self) -> Option<&mut Artist> {
-        Some(&mut self.artist)
     }
 }
 
@@ -73,20 +61,22 @@ impl Component for ViewArtistScreen {
     }
 
     fn tick(&mut self, app: &mut App) -> AppResult<Option<Message>> {
-        if !self.now_playing.is_empty() {
-            if self.now_playing.artist_ids[0] != self.artist.id {
-                self.artist.id = self.now_playing.artist_ids[0].clone();
-            }
-        }
-
-        if let Some(message) = self.tabbed_view.tick(app)? {
-            return Ok(Some(message));
-        }
-
-        Ok(Some(Message::RefreshNowPlaying))
+        self.tabbed_view.tick(app)
     }
 
     fn handle_key_press(&mut self, app: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
         self.tabbed_view.handle_key_press(app, key)
+    }
+
+    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
+        self.tabbed_view.get_now_playing()
+    }
+
+    fn get_artist(&mut self) -> Option<&mut Artist> {
+        self.tabbed_view.get_artist()
+    }
+
+    fn get_song(&mut self) -> Option<&mut Song> {
+        self.tabbed_view.get_song()
     }
 }
