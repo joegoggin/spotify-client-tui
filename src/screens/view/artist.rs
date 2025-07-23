@@ -16,7 +16,7 @@ use crate::{
     core::{
         app::{App, AppResult},
         message::Message,
-        spotify::{artist::Artist, now_playing::NowPlaying, song::Song},
+        spotify::{album::Album, artist::Artist, now_playing::NowPlaying, song::Song},
     },
     screens::{Screen, ScreenType},
 };
@@ -92,5 +92,9 @@ impl Component for ViewArtistScreen {
 
     fn get_song(&mut self) -> Option<&mut Song> {
         self.tabbed_view.get_song()
+    }
+
+    fn get_album(&mut self) -> Option<&mut Album> {
+        self.tabbed_view.get_album()
     }
 }

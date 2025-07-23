@@ -16,6 +16,7 @@ pub struct List {
     pub items: Vec<NameAndId>,
     pub current_item_id: Option<String>,
     pub active_index: usize,
+    pub is_active: bool,
     area: Rect,
     max_items: u16,
     start_index: usize,
@@ -28,6 +29,7 @@ impl Default for List {
         Self {
             items: vec![],
             current_item_id: None,
+            is_active: true,
             area: Rect::default(),
             max_items: 0,
             active_index: 0,
@@ -43,6 +45,7 @@ impl List {
         Self {
             items,
             current_item_id,
+            is_active: true,
             area: Rect::default(),
             max_items: 0,
             active_index: 0,
@@ -55,7 +58,7 @@ impl List {
     fn get_item_style(&self, index: usize) -> Style {
         let mut style = Style::default().fg(Color::Green);
 
-        if self.active_index == index {
+        if self.active_index == index && self.is_active {
             style = Style::default().fg(Color::White).bg(Color::Green);
         }
 
