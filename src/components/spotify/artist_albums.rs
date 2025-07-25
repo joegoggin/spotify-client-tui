@@ -1,6 +1,6 @@
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Constraint, Direction, Layout, Rect},
     style::Color,
     Frame,
 };
@@ -9,14 +9,9 @@ use crate::{
     components::{list::List, loading::Loading, Component},
     core::{
         message::Message,
-        spotify::{
-            album::{self, Album},
-            artist::Artist,
-            now_playing::NowPlaying,
-            song::Song,
-        },
+        spotify::{album::Album, artist::Artist, now_playing::NowPlaying, song::Song},
     },
-    widgets::block::{create_block, create_titled_block},
+    widgets::block::create_block,
     App, AppResult,
 };
 
@@ -158,6 +153,7 @@ impl Component for ArtistAlbums {
                     self.song_list.is_active = false;
                     self.album_list.is_active = true;
                     self.active_list_type = ListType::Album;
+                    self.song_list.active_index = 0;
                 }
             }
             KeyCode::Enter => match self.active_list_type {

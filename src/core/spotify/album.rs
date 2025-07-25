@@ -1,3 +1,4 @@
+use log::debug;
 use serde_json::Value;
 
 use crate::{core::app::AppResult, utils::value::GetOrDefault};
@@ -46,7 +47,7 @@ impl Album {
 
         let name = json.get_string_or_default("name");
         let mut artists = Vec::<String>::new();
-        let year = json.get_string_or_default("release_date")[0..4].to_string();
+        let year = json.get_string_or_default("release_date");
         let mut songs = Vec::<NameAndId>::new();
         let total_songs = json.get_number_or_default("total_tracks");
 

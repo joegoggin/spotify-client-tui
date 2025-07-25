@@ -39,7 +39,11 @@ impl Default for ViewArtistScreen {
             Box::new(top_songs),
         ));
         tabs.push(Tab::new("Albums", KeyCode::Char('2'), Box::new(albums)));
-        tabs.push(Tab::new("Singles", KeyCode::Char('3'), Box::new(singles)));
+        tabs.push(Tab::new(
+            "Singles and EPs",
+            KeyCode::Char('3'),
+            Box::new(singles),
+        ));
 
         Self {
             tabbed_view: TabbedView::new(tabs),
