@@ -1,6 +1,13 @@
+use color_eyre::eyre::Error;
+use num_format::{Locale, ToFormattedString};
+use reqwest::get;
+use scraper::{Html, Selector};
 use serde_json::Value;
 
-use crate::{utils::value::GetOrDefault, AppResult};
+use crate::{
+    utils::{string::Capitalize, value::GetOrDefault},
+    AppResult,
+};
 
 use super::{client::SpotifyClient, NameAndId};
 
@@ -11,6 +18,9 @@ pub struct Artist {
     pub top_songs: Vec<NameAndId>,
     pub albums: Vec<NameAndId>,
     pub singles: Vec<NameAndId>,
+    pub genres: Vec<String>,
+    pub followers: String,
+    pub monthly_listeners: String,
 }
 
 impl Default for Artist {
@@ -21,6 +31,9 @@ impl Default for Artist {
             top_songs: vec![],
             albums: vec![],
             singles: vec![],
+            genres: vec![],
+            followers: String::new(),
+            monthly_listeners: String::new(),
         }
     }
 }
@@ -33,6 +46,9 @@ impl Artist {
             top_songs: vec![],
             albums: vec![],
             singles: vec![],
+            genres: vec![],
+            followers: String::new(),
+            monthly_listeners: String::new(),
         }
     }
 
@@ -42,6 +58,23 @@ impl Artist {
         let json = resposne.json::<Value>().await?;
 
         let name = json.get_string_or_default("name");
+        let genre_values = json.get_array_or_default("genres");
+        let mut genres: Vec<String> = vec![];
+        let mut followers = String::new();
+
+        for value in genre_values {
+            if let Value::String(genre) = value {
+                genres.push(Self::capitalize_genre(genre));
+            }
+        }
+
+        let monthly_listeners = self.fetch_monthly_listeners().await?;
+
+        if let Some(value) = json.get("followers") {
+            followers = value
+                .get_number_or_default("total")
+                .to_formatted_string(&Locale::en)
+        }
 
         let url = format!("artists/{}/top-tracks", self.id);
         let response = spotify_cleint.get(&url).await?;
@@ -86,7 +119,53 @@ impl Artist {
         self.top_songs = top_songs;
         self.albums = albums;
         self.singles = singles;
+        self.genres = genres;
+        self.followers = followers;
+        self.monthly_listeners = monthly_listeners;
 
         Ok(())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.name == "".to_string()
+    }
+
+    async fn fetch_monthly_listeners(&self) -> AppResult<String> {
+        let mut monthly_listeners = String::new();
+        let url = format!("https://open.spotify.com/artist/{}", self.id);
+        let response = get(&url).await?;
+        let text = response.text().await?;
+
+        let document = Html::parse_document(&text);
+        let selector = Selector::parse(r#"#main [data-testid="monthly-listeners-label"]"#)
+            .map_err(|_| Error::msg("invalid selector"))?;
+        let elements: Vec<_> = document.select(&selector).collect();
+
+        if elements.len() > 0 {
+            monthly_listeners =
+                elements[0].inner_html().split(" ").collect::<Vec<_>>()[0].to_string();
+        }
+
+        Ok(monthly_listeners)
+    }
+
+    fn capitalize_genre(genre: String) -> String {
+        if genre.contains(" ") {
+            let mut capitalized_genre = "".to_string();
+
+            let words: Vec<&str> = genre.split(" ").collect();
+
+            for (i, word) in words.iter().enumerate() {
+                if i == words.len() - 1 {
+                    capitalized_genre += &word.capitalize();
+                } else {
+                    capitalized_genre += &format!("{} ", word.capitalize());
+                }
+            }
+
+            return capitalized_genre;
+        }
+
+        genre.capitalize()
     }
 }

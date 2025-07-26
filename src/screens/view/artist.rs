@@ -8,7 +8,8 @@ use crate::{
     components::{
         screen_block::ScreenBlock,
         spotify::{
-            artist_albums::ArtistAlbums, artist_singles::ArtistSingles, top_songs::TopSongs,
+            artist_albums::ArtistAlbums, artist_info::ArtistInfo, artist_singles::ArtistSingles,
+            top_songs::TopSongs,
         },
         tabs::{tab::Tab, tabbed_view::TabbedView},
         Component,
@@ -31,17 +32,23 @@ impl Default for ViewArtistScreen {
         let top_songs = TopSongs::default();
         let albums = ArtistAlbums::default();
         let singles = ArtistSingles::default();
+        let artist_info = ArtistInfo::default();
 
         let mut tabs: Vec<Tab> = vec![];
         tabs.push(Tab::new(
-            "Top Songs",
+            "Artist Info",
             KeyCode::Char('1'),
+            Box::new(artist_info),
+        ));
+        tabs.push(Tab::new(
+            "Top Songs",
+            KeyCode::Char('2'),
             Box::new(top_songs),
         ));
-        tabs.push(Tab::new("Albums", KeyCode::Char('2'), Box::new(albums)));
+        tabs.push(Tab::new("Albums", KeyCode::Char('3'), Box::new(albums)));
         tabs.push(Tab::new(
             "Singles and EPs",
-            KeyCode::Char('3'),
+            KeyCode::Char('4'),
             Box::new(singles),
         ));
 
@@ -57,7 +64,9 @@ impl ViewArtistScreen {
 
         if let Some(componet) = self.tabbed_view.clone().get_active_component() {
             if let Some(artist) = componet.get_artist() {
-                title = format!("{}", artist.name)
+                if !artist.is_empty() {
+                    title = format!("{}", artist.name)
+                }
             }
         }
 
