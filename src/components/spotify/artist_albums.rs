@@ -6,7 +6,7 @@ use ratatui::{
 };
 
 use crate::{
-    components::{list::List, loading::Loading, Component},
+    components::{list::List, Component},
     core::{
         message::Message,
         spotify::{album::Album, artist::Artist, now_playing::NowPlaying, song::Song},
