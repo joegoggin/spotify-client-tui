@@ -45,15 +45,15 @@ impl Component for ArtistInfo {
 
         let followers_string = format!("{} Followers", self.artist.followers);
         let listeners_string = format!("{} Monthly Listeners", self.artist.monthly_listeners);
-        let mut genre_string = "Genres: ".to_string();
-
-        for (i, genre) in self.artist.genres.iter().enumerate() {
-            if i == self.artist.genres.len() - 1 {
-                genre_string += &genre.capitalize();
-            } else {
-                genre_string += &format!("{}, ", genre.capitalize());
-            }
-        }
+        let genre_string = format!(
+            "Genres: {}",
+            self.artist
+                .genres
+                .iter()
+                .map(|genre| genre.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
 
         let name_paragraph = create_centered_paragraph(&self.artist.name, Some(Color::Green));
         let followers_paragraph = create_centered_paragraph(&followers_string, Some(Color::Green));
@@ -63,10 +63,10 @@ impl Component for ArtistInfo {
         let chunks = Layout::default()
             .margin(3)
             .constraints(vec![
-                Constraint::Min(1),
-                Constraint::Min(1),
-                Constraint::Min(1),
-                Constraint::Min(1),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
             ])
             .split(self.area);
 
