@@ -7,6 +7,7 @@ use ratatui::Frame;
 use crate::components::loading::Loading;
 use crate::core::message::Message;
 use crate::core::spotify::NameAndId;
+use crate::widgets::paragraph;
 use crate::{App, AppResult};
 
 use super::Component;
@@ -76,6 +77,40 @@ impl List {
             None => (String::new(), String::new()),
         }
     }
+
+    fn move_selection_down(&mut self) {
+        if self.active_index >= self.end_index - 1 {
+            self.start_index = self.start_index + 1;
+            self.end_index = self.end_index + 1;
+        }
+        if self.active_index < self.items.len() - 1 {
+            self.active_index = self.active_index + 1;
+        } else {
+            self.active_index = 0;
+            self.start_index = 0;
+            self.end_index = self.max_items.into();
+        }
+    }
+
+    fn move_selection_up(&mut self) {
+        if self.active_index <= self.start_index && self.active_index != 0 {
+            self.start_index = self.start_index - 1;
+            self.end_index = self.end_index - 1;
+        }
+
+        if self.active_index == 0 {
+            self.active_index = self.items.len() - 1;
+            self.end_index = self.items.len();
+
+            if self.items.len() < self.max_items as usize {
+                self.start_index = 0;
+            } else {
+                self.start_index = (self.items.len() - self.max_items as usize) as usize;
+            }
+        } else {
+            self.active_index = self.active_index - 1;
+        }
+    }
 }
 
 impl Component for List {
@@ -118,12 +153,12 @@ impl Component for List {
         let chunks = Layout::default()
             .margin(1)
             .direction(Direction::Vertical)
-            .constraints(constraits)
+            .constraints(constraints)
             .split(self.area);
 
-        for i in 0..self.items.len() {
-            if i < paragraphs.len() {
-                frame.render_widget(paragraphs[i].clone(), chunks[i]);
+        for (i, paragraph) in paragraphs.iter().enumerate() {
+            if i < chunks.len() {
+                frame.render_widget(paragraph.clone(), chunks[i]);
             }
         }
     }
@@ -135,41 +170,14 @@ impl Component for List {
     fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
         match key.code {
             KeyCode::Char('j') => {
-                if self.active_index >= self.end_index - 1 {
-                    self.start_index = self.start_index + 1;
-                    self.end_index = self.end_index + 1;
-                }
-                if self.active_index < self.items.len() - 1 {
-                    self.active_index = self.active_index + 1;
-                } else {
-                    self.active_index = 0;
-                    self.start_index = 0;
-                    self.end_index = self.max_items.into();
-                }
-
+                self.move_selection_down();
                 Ok(None)
             }
             KeyCode::Char('k') => {
-                if self.active_index <= self.start_index && self.active_index != 0 {
-                    self.start_index = self.start_index - 1;
-                    self.end_index = self.end_index - 1;
-                }
-
-                if self.active_index == 0 {
-                    self.active_index = self.items.len() - 1;
-                    self.end_index = self.items.len();
-
-                    if self.items.len() < self.max_items as usize {
-                        self.start_index = 0;
-                    } else {
-                        self.start_index = (self.items.len() - self.max_items as usize) as usize;
-                    }
-                } else {
-                    self.active_index = self.active_index - 1;
-                }
-
+                self.move_selection_down();
                 Ok(None)
             }
+
             _ => Ok(None),
         }
     }
