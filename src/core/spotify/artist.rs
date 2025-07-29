@@ -52,9 +52,9 @@ impl Artist {
         }
     }
 
-    pub async fn refresh(&mut self, spotify_cleint: &mut SpotifyClient) -> AppResult<()> {
+    pub async fn refresh(&mut self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
         let url = format!("artists/{}", self.id);
-        let resposne = spotify_cleint.get(&url).await?;
+        let resposne = spotify_client.get(&url).await?;
         let json = resposne.json::<Value>().await?;
 
         let name = json.get_string_or_default("name");
@@ -77,7 +77,7 @@ impl Artist {
         }
 
         let url = format!("artists/{}/top-tracks", self.id);
-        let response = spotify_cleint.get(&url).await?;
+        let response = spotify_client.get(&url).await?;
         let json = response.json::<Value>().await?;
         let song_values = json.get_array_or_default("tracks");
         let mut top_songs: Vec<NameAndId> = vec![];
@@ -90,7 +90,7 @@ impl Artist {
         }
 
         let url = format!("artists/{}/albums?limit=50&include_groups=album", self.id);
-        let response = spotify_cleint.get(&url).await?;
+        let response = spotify_client.get(&url).await?;
         let json = response.json::<Value>().await?;
         let album_values = json.get_array_or_default("items");
         let mut albums: Vec<NameAndId> = vec![];
@@ -103,7 +103,7 @@ impl Artist {
         }
 
         let url = format!("artists/{}/albums?limit=50&include_groups=single", self.id);
-        let response = spotify_cleint.get(&url).await?;
+        let response = spotify_client.get(&url).await?;
         let json = response.json::<Value>().await?;
         let single_values = json.get_array_or_default("items");
         let mut singles: Vec<NameAndId> = vec![];
@@ -127,7 +127,7 @@ impl Artist {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.name == "".to_string()
+        self.name.is_empty()
     }
 
     async fn fetch_monthly_listeners(&self) -> AppResult<String> {
@@ -141,7 +141,7 @@ impl Artist {
             .map_err(|_| Error::msg("invalid selector"))?;
         let elements: Vec<_> = document.select(&selector).collect();
 
-        if elements.len() > 0 {
+        if elements.is_empty() {
             monthly_listeners =
                 elements[0].inner_html().split(" ").collect::<Vec<_>>()[0].to_string();
         }
@@ -151,21 +151,13 @@ impl Artist {
 
     fn capitalize_genre(genre: String) -> String {
         if genre.contains(" ") {
-            let mut capitalized_genre = "".to_string();
-
-            let words: Vec<&str> = genre.split(" ").collect();
-
-            for (i, word) in words.iter().enumerate() {
-                if i == words.len() - 1 {
-                    capitalized_genre += &word.capitalize();
-                } else {
-                    capitalized_genre += &format!("{} ", word.capitalize());
-                }
-            }
-
-            return capitalized_genre;
+            genre
+                .split(" ")
+                .map(|word| word.capitalize())
+                .collect::<Vec<_>>()
+                .join(" ")
+        } else {
+            genre.capitalize()
         }
-
-        genre.capitalize()
     }
 }
