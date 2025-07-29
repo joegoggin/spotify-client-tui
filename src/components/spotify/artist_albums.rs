@@ -91,12 +91,10 @@ impl Component for ArtistAlbums {
     }
 
     fn tick(&mut self, _: &mut App) -> AppResult<Option<Message>> {
-        if !self.now_playing.is_empty() {
-            if self.now_playing.artist_ids[0] != self.artist.id {
-                self.artist.id = self.now_playing.artist_ids[0].clone();
+        if !self.now_playing.is_empty() && self.now_playing.artist_ids[0] != self.artist.id {
+            self.artist.id = self.now_playing.artist_ids[0].clone();
 
-                return Ok(Some(Message::RefreshArtist));
-            }
+            return Ok(Some(Message::RefreshArtist));
         }
 
         if self.album_list.get_active_item().1 != self.album.id {
@@ -158,11 +156,9 @@ impl Component for ArtistAlbums {
             }
             KeyCode::Enter => match self.active_list_type {
                 ListType::Album => {
-                    if self.active_list_type == ListType::Album {
-                        self.album_list.is_active = false;
-                        self.song_list.is_active = true;
-                        self.active_list_type = ListType::Song;
-                    }
+                    self.album_list.is_active = false;
+                    self.song_list.is_active = true;
+                    self.active_list_type = ListType::Song;
                 }
                 ListType::Song => {
                     return Ok(Some(Message::PlaySongs {
