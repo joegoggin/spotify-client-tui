@@ -47,3 +47,9 @@ pub fn throw_no_album_error() -> Option<Message> {
 
     Some(Message::ChangeScreen { new_screen })
 }
+
+pub fn throw_no_artist_error() -> Option<Message> {
+    let new_screen = Box::new(ErrorScreen::new(not_set_on_screen_message("Artist")));
+
+    Some(Message::ChangeScreen { new_screen })
+}

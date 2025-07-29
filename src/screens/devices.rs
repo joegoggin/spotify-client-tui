@@ -41,10 +41,6 @@ impl Screen for DevicesScreen {
     fn get_screen_type(&self) -> ScreenType {
         ScreenType::DevicesScreen
     }
-
-    fn get_device(&mut self) -> Option<&mut Device> {
-        Some(&mut self.device)
-    }
 }
 
 impl Component for DevicesScreen {
@@ -116,5 +112,9 @@ impl Component for DevicesScreen {
             }
             _ => Ok(None),
         }
+    }
+
+    fn get_device(&mut self) -> Option<&mut Device> {
+        Some(&mut self.device)
     }
 }

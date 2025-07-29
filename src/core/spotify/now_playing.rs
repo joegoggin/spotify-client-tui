@@ -1,4 +1,3 @@
-use async_recursion::async_recursion;
 use color_eyre::eyre::eyre;
 use serde_json::Value;
 
@@ -39,7 +38,6 @@ impl NowPlaying {
         }
     }
 
-    #[async_recursion]
     pub async fn refresh(&mut self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
         let response = spotify_client.get("me/player").await?;
         let status = response.status();

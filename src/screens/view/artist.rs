@@ -1,26 +1,74 @@
-use log::debug;
-use ratatui::{crossterm::event::KeyEvent, style::Color, Frame};
+use ratatui::{
+    crossterm::event::{KeyCode, KeyEvent},
+    style::Color,
+    Frame,
+};
 
 use crate::{
-    components::{screen_block::ScreenBlock, Component},
+    components::{
+        screen_block::ScreenBlock,
+        spotify::{
+            artist_albums::ArtistAlbums, artist_info::ArtistInfo, artist_singles::ArtistSingles,
+            top_songs::TopSongs,
+        },
+        tabs::{tab::Tab, tabbed_view::TabbedView},
+        Component,
+    },
     core::{
         app::{App, AppResult},
-        config::Config,
         message::Message,
-        spotify::client::SpotifyClient,
+        spotify::{album::Album, artist::Artist, now_playing::NowPlaying, song::Song},
     },
-    screens::{
-        auth::{create_config::CreateConfigFormScreen, show_link::ShowAuthLinkScreen},
-        Screen, ScreenType,
-    },
+    screens::{Screen, ScreenType},
 };
 
 #[derive(Clone)]
-pub struct ViewArtistScreen;
+pub struct ViewArtistScreen {
+    tabbed_view: TabbedView,
+}
 
 impl Default for ViewArtistScreen {
     fn default() -> Self {
-        Self
+        let top_songs = TopSongs::default();
+        let albums = ArtistAlbums::default();
+        let singles = ArtistSingles::default();
+        let artist_info = ArtistInfo::default();
+
+        let mut tabs: Vec<Tab> = vec![];
+        tabs.push(Tab::new(
+            "Artist Info",
+            KeyCode::Char('1'),
+            Box::new(artist_info),
+        ));
+        tabs.push(Tab::new(
+            "Top Songs",
+            KeyCode::Char('2'),
+            Box::new(top_songs),
+        ));
+        tabs.push(Tab::new("Albums", KeyCode::Char('3'), Box::new(albums)));
+        tabs.push(Tab::new(
+            "Singles and EPs",
+            KeyCode::Char('4'),
+            Box::new(singles),
+        ));
+
+        Self {
+            tabbed_view: TabbedView::new(tabs),
+        }
+    }
+}
+
+impl ViewArtistScreen {
+    fn get_title(&mut self) -> String {
+        let mut title = "View Artist".to_string();
+
+        if let Some(artist) = self.get_artist() {
+            if !artist.is_empty() {
+                title = format!("{}", artist.name)
+            }
+        }
+
+        title
     }
 }
 
@@ -32,42 +80,32 @@ impl Screen for ViewArtistScreen {
 
 impl Component for ViewArtistScreen {
     fn view(&mut self, app: &App, frame: &mut Frame) {
-        ScreenBlock::new_with_color("View Artist", Color::Green).view(app, frame);
+        ScreenBlock::new_with_color(self.get_title(), Color::Green).view(app, frame);
+
+        self.tabbed_view.view(app, frame);
     }
 
     fn tick(&mut self, app: &mut App) -> AppResult<Option<Message>> {
-        match app.spotify_client.clone() {
-            Some(spotify_client) => {
-                if spotify_client.credentials.is_none() {
-                    let new_screen = Box::new(ShowAuthLinkScreen::new(spotify_client.auth_url));
-
-                    return Ok(Some(Message::ChangeScreen { new_screen }));
-                }
-
-                Ok(None)
-            }
-            None => {
-                let config = Config::new()?;
-                let result = SpotifyClient::new(config.clone());
-
-                match result {
-                    Ok(spotify_client) => {
-                        app.spotify_client = Some(spotify_client);
-
-                        Ok(None)
-                    }
-                    Err(_) => {
-                        let new_screen = Box::new(CreateConfigFormScreen::new(&config));
-
-                        Ok(Some(Message::ChangeScreen { new_screen }))
-                    }
-                }
-            }
-        }
+        self.tabbed_view.tick(app)
     }
 
-    fn handle_key_press(&mut self, _: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
-        debug!("{:#?}", key);
-        Ok(None)
+    fn handle_key_press(&mut self, app: &mut App, key: KeyEvent) -> AppResult<Option<Message>> {
+        self.tabbed_view.handle_key_press(app, key)
+    }
+
+    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
+        self.tabbed_view.get_now_playing()
+    }
+
+    fn get_artist(&mut self) -> Option<&mut Artist> {
+        self.tabbed_view.get_artist()
+    }
+
+    fn get_song(&mut self) -> Option<&mut Song> {
+        self.tabbed_view.get_song()
+    }
+
+    fn get_album(&mut self) -> Option<&mut Album> {
+        self.tabbed_view.get_album()
     }
 }

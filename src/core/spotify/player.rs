@@ -1,9 +1,9 @@
-use async_recursion::async_recursion;
 use color_eyre::eyre::eyre;
 use log::error;
 use serde_json::{json, Value};
 
 use crate::core::app::AppResult;
+use crate::core::spotify::NameAndId;
 
 use super::client::SpotifyClient;
 
@@ -14,7 +14,6 @@ impl SpotifyPlayer {
         Self {}
     }
 
-    #[async_recursion]
     pub async fn play_song_on_album(
         &self,
         spotify_client: &mut SpotifyClient,
@@ -36,7 +35,27 @@ impl SpotifyPlayer {
         Ok(())
     }
 
-    #[async_recursion]
+    pub async fn play_songs(
+        &self,
+        spotify_client: &mut SpotifyClient,
+        offset: usize,
+        songs: Vec<NameAndId>,
+    ) -> AppResult<()> {
+        let mut uris: Vec<String> = vec![];
+
+        for i in offset..songs.len() {
+            uris.push(format!("spotify:track:{}", songs[i].1));
+        }
+
+        let body = json!({
+            "uris": uris,
+        });
+
+        spotify_client.put("me/player/play", Some(&body)).await?;
+
+        Ok(())
+    }
+
     pub async fn toggle_pause_play(&self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
         if self.is_playing(spotify_client).await? {
             spotify_client.put("me/player/pause", None).await?;
@@ -47,7 +66,6 @@ impl SpotifyPlayer {
         Ok(())
     }
 
-    #[async_recursion]
     pub async fn is_playing(&self, spotify_client: &mut SpotifyClient) -> AppResult<bool> {
         let response = spotify_client.get("me/player").await?;
         let status = response.status();
@@ -72,21 +90,18 @@ impl SpotifyPlayer {
         Ok(false)
     }
 
-    #[async_recursion]
     pub async fn next_song(&self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
         spotify_client.post("me/player/next", None).await?;
 
         Ok(())
     }
 
-    #[async_recursion]
     pub async fn previous_song(&self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
         spotify_client.post("me/player/previous", None).await?;
 
         Ok(())
     }
 
-    #[async_recursion]
     pub async fn toggle_shuffle(&self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
         let response = spotify_client.get("me/player").await?;
         let status = response.status();

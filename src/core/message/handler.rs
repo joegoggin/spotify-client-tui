@@ -3,12 +3,12 @@ use crate::{
     core::{
         app::{App, AppResult},
         clap::Args,
-        spotify::player::SpotifyPlayer,
+        spotify::{player::SpotifyPlayer, NameAndId},
     },
     screens::{home::HomeScreen, Screen, ScreenType},
     utils::error::{
-        handle_error, throw_no_album_error, throw_no_device_error, throw_no_now_playing_error,
-        throw_no_song_error, throw_no_spotify_client_error,
+        handle_error, throw_no_album_error, throw_no_artist_error, throw_no_device_error,
+        throw_no_now_playing_error, throw_no_song_error, throw_no_spotify_client_error,
     },
 };
 
@@ -62,8 +62,10 @@ impl<'a> MessageHandler<'a> {
                     track_number,
                     album_id,
                 } => self.play_song_on_album(track_number, album_id).await,
+                Message::PlaySongs { offset, songs } => self.play_songs(offset, songs).await,
                 Message::RefreshSong => self.refresh_song().await,
                 Message::RefreshAlbum => self.refresh_album().await,
+                Message::RefreshArtist => self.refresh_artist().await,
             };
 
             if self.current_message.is_some() {
@@ -102,7 +104,10 @@ impl<'a> MessageHandler<'a> {
     fn go_to_prev_screen(&mut self) -> Option<Message> {
         if let Some(last_screen) = self.app.history.prev.pop() {
             if self.current_screen.get_screen_type() != ScreenType::Exit {
-                self.app.history.next.push(self.current_screen.clone_box());
+                self.app
+                    .history
+                    .next
+                    .push(self.current_screen.clone_screen_box());
             }
 
             *self.current_screen = last_screen;
@@ -114,7 +119,10 @@ impl<'a> MessageHandler<'a> {
     fn go_to_next_screen(&mut self) -> Option<Message> {
         if let Some(next_screen) = self.app.history.next.pop() {
             if self.current_screen.get_screen_type() != ScreenType::Exit {
-                self.app.history.prev.push(self.current_screen.clone_box())
+                self.app
+                    .history
+                    .prev
+                    .push(self.current_screen.clone_screen_box())
             }
 
             *self.current_screen = next_screen;
@@ -248,6 +256,18 @@ impl<'a> MessageHandler<'a> {
         }
     }
 
+    async fn play_songs(&mut self, offset: usize, songs: Vec<NameAndId>) -> Option<Message> {
+        match self.app.spotify_client.as_mut() {
+            Some(mut spotify_client) => {
+                let player = SpotifyPlayer::new();
+                let result = player.play_songs(&mut spotify_client, offset, songs).await;
+
+                handle_error(result)
+            }
+            None => throw_no_spotify_client_error(),
+        }
+    }
+
     async fn refresh_song(&mut self) -> Option<Message> {
         match self.app.spotify_client.as_mut() {
             Some(mut spotify_client) => match self.current_screen.get_song() {
@@ -271,6 +291,20 @@ impl<'a> MessageHandler<'a> {
                     handle_error(result)
                 }
                 None => throw_no_album_error(),
+            },
+            None => throw_no_spotify_client_error(),
+        }
+    }
+
+    async fn refresh_artist(&mut self) -> Option<Message> {
+        match self.app.spotify_client.as_mut() {
+            Some(mut spotify_client) => match self.current_screen.get_artist() {
+                Some(artist) => {
+                    let result = artist.refresh(&mut spotify_client).await;
+
+                    handle_error(result)
+                }
+                None => throw_no_artist_error(),
             },
             None => throw_no_spotify_client_error(),
         }

@@ -67,25 +67,25 @@ impl Command {
                 player_command.handle_command(app).await?;
             }
             Command::NowPlaying => {
-                app.history.prev.push(current_screen.clone_box());
+                app.history.prev.push(current_screen.clone_screen_box());
                 *current_screen = Box::new(NowPlayingScreen::default());
             }
             Command::View { view_command } => match view_command {
                 ViewCommand::Album => {
-                    app.history.prev.push(current_screen.clone_box());
+                    app.history.prev.push(current_screen.clone_screen_box());
                     *current_screen = Box::new(ViewAlbumScreen::default());
                 }
                 ViewCommand::Artist => {
-                    app.history.prev.push(current_screen.clone_box());
+                    app.history.prev.push(current_screen.clone_screen_box());
                     *current_screen = Box::new(ViewArtistScreen::default());
                 }
             },
             Command::Queue => {
-                app.history.prev.push(current_screen.clone_box());
+                app.history.prev.push(current_screen.clone_screen_box());
                 *current_screen = Box::new(QueueScreen::default());
             }
             Command::Search => {
-                app.history.prev.push(current_screen.clone_box());
+                app.history.prev.push(current_screen.clone_screen_box());
                 *current_screen = Box::new(SearchScreen::default());
             }
             Command::Library => {

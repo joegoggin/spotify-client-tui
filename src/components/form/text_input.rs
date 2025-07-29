@@ -74,10 +74,6 @@ impl Input for TextInput {
         self.mode = mode;
     }
 
-    fn set_area(&mut self, area: Option<Rect>) {
-        self.area = area;
-    }
-
     fn get_value(&self) -> InputValue {
         InputValue::Text(self.value.clone())
     }
@@ -208,5 +204,9 @@ impl Component for TextInput {
         self.update_cursor_blink();
 
         Ok(None)
+    }
+
+    fn set_area(&mut self, area: Rect) {
+        self.area = Some(area);
     }
 }

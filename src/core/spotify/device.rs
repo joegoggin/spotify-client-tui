@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use async_recursion::async_recursion;
 use serde_json::{json, Value};
 
 use crate::{core::app::AppResult, utils::value::GetOrDefault};
@@ -23,7 +22,6 @@ impl Default for Device {
 }
 
 impl Device {
-    #[async_recursion]
     pub async fn refresh(&mut self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
         let response = spotify_client.get("me/player/devices").await?;
         let status = response.status();
@@ -69,7 +67,6 @@ impl Device {
         devices_names
     }
 
-    #[async_recursion]
     pub async fn set_current_device(
         &mut self,
         spotify_client: &mut SpotifyClient,
@@ -85,7 +82,6 @@ impl Device {
         Ok(())
     }
 
-    #[async_recursion]
     pub async fn print_devices(&self, spotify_client: &mut SpotifyClient) -> AppResult<()> {
         let response = spotify_client.get("me/player/devices").await?;
         let status = response.status();

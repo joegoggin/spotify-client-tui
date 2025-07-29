@@ -39,14 +39,6 @@ impl Screen for NowPlayingScreen {
     fn get_screen_type(&self) -> ScreenType {
         ScreenType::NowPlayingScreen
     }
-
-    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
-        Some(&mut self.now_playing)
-    }
-
-    fn get_song(&mut self) -> Option<&mut Song> {
-        Some(&mut self.song)
-    }
 }
 
 impl Component for NowPlayingScreen {
@@ -147,5 +139,13 @@ impl Component for NowPlayingScreen {
             })),
             _ => Ok(None),
         }
+    }
+
+    fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
+        Some(&mut self.now_playing)
+    }
+
+    fn get_song(&mut self) -> Option<&mut Song> {
+        Some(&mut self.song)
     }
 }
