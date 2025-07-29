@@ -42,9 +42,9 @@ impl TabbedView {
         }
     }
 
-    pub fn get_active_component(&mut self) -> Option<&mut Box<dyn Component>> {
+    pub fn get_active_component(&mut self) -> Option<&mut dyn Component> {
         if self.active_tab < self.tabs.len() {
-            return Some(&mut self.tabs[self.active_tab].component);
+            return Some(self.tabs[self.active_tab].component.as_mut());
         }
 
         None
@@ -73,7 +73,7 @@ impl Component for TabbedView {
             constraints.push(Constraint::Min(1))
         }
 
-        let verticle_chunks = Layout::default()
+        let vertical_chunks = Layout::default()
             .margin(2)
             .constraints(vec![
                 Constraint::Max(1),
@@ -85,14 +85,14 @@ impl Component for TabbedView {
         let horizontal_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints(constraints)
-            .split(verticle_chunks[0]);
+            .split(vertical_chunks[0]);
 
         for (i, option) in menu_options.iter().enumerate() {
             frame.render_widget(option, horizontal_chunks[i]);
         }
 
         if let Some(component) = self.get_active_component() {
-            component.set_area(verticle_chunks[2]);
+            component.set_area(vertical_chunks[2]);
             component.view(app, frame);
         }
     }
