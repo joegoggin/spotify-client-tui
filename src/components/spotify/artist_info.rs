@@ -11,7 +11,6 @@ use crate::{
         message::Message,
         spotify::{artist::Artist, now_playing::NowPlaying},
     },
-    utils::string::Capitalize,
     widgets::paragraph::create_centered_paragraph,
     App, AppResult,
 };

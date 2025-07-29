@@ -7,7 +7,6 @@ use ratatui::Frame;
 use crate::components::loading::Loading;
 use crate::core::message::Message;
 use crate::core::spotify::NameAndId;
-use crate::widgets::paragraph;
 use crate::{App, AppResult};
 
 use super::Component;
