@@ -141,7 +141,7 @@ impl Artist {
             .map_err(|_| Error::msg("invalid selector"))?;
         let elements: Vec<_> = document.select(&selector).collect();
 
-        if elements.is_empty() {
+        if !elements.is_empty() {
             monthly_listeners =
                 elements[0].inner_html().split(" ").collect::<Vec<_>>()[0].to_string();
         }
