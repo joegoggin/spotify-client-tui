@@ -1,4 +1,3 @@
-use log::debug;
 use ratatui::{
     crossterm::event::{KeyCode, KeyEvent},
     layout::{Constraint, Direction, Layout, Rect},
@@ -154,11 +153,9 @@ impl Component for ArtistSingles {
             }
             KeyCode::Enter => match self.active_list_type {
                 ListType::Single => {
-                    if self.active_list_type == ListType::Single {
-                        self.single_list.is_active = false;
-                        self.song_list.is_active = true;
-                        self.active_list_type = ListType::Song;
-                    }
+                    self.single_list.is_active = false;
+                    self.song_list.is_active = true;
+                    self.active_list_type = ListType::Song;
                 }
                 ListType::Song => {
                     return Ok(Some(Message::PlaySongs {
