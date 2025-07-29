@@ -56,11 +56,6 @@ impl Default for ArtistAlbums {
 
 impl Component for ArtistAlbums {
     fn view(&mut self, app: &App, frame: &mut Frame) {
-        if self.now_playing.is_empty() {
-            Loading::default().view(app, frame);
-            return;
-        }
-
         let list_block = create_block(Color::Green);
         let info_block = create_block(Color::Green);
 

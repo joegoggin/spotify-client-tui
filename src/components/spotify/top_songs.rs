@@ -40,11 +40,6 @@ impl Default for TopSongs {
 
 impl Component for TopSongs {
     fn view(&mut self, app: &App, frame: &mut Frame) {
-        if self.now_playing.is_empty() {
-            Loading::default().view(app, frame);
-            return;
-        }
-
         let song_list_block = create_block(Color::Green);
         let info_block = create_block(Color::Green);
 
