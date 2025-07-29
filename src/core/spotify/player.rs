@@ -44,7 +44,7 @@ impl SpotifyPlayer {
         let mut uris: Vec<String> = vec![];
 
         for i in offset..songs.len() {
-            uris.push(format!("spotify:track:{}", songs[i as usize].1));
+            uris.push(format!("spotify:track:{}", songs[i].1));
         }
 
         let body = json!({
