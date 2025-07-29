@@ -88,11 +88,11 @@ impl Component for List {
             return;
         }
 
-        let mut constraits: Vec<Constraint> = vec![];
+        let mut constraints: Vec<Constraint> = vec![];
         let mut paragraphs: Vec<Paragraph> = vec![];
 
         for _ in 0..self.max_items {
-            constraits.push(Constraint::Max(1));
+            constraints.push(Constraint::Max(1));
         }
 
         for i in self.start_index..self.end_index {
