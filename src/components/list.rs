@@ -174,7 +174,7 @@ impl Component for List {
                 Ok(None)
             }
             KeyCode::Char('k') => {
-                self.move_selection_down();
+                self.move_selection_up();
                 Ok(None)
             }
 
