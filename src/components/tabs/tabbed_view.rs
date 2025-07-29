@@ -122,37 +122,27 @@ impl Component for TabbedView {
     }
 
     fn get_now_playing(&mut self) -> Option<&mut NowPlaying> {
-        match self.get_active_component() {
-            Some(component) => component.get_now_playing(),
-            None => None,
-        }
+        self.get_active_component()
+            .and_then(|component| component.get_now_playing())
     }
 
     fn get_device(&mut self) -> Option<&mut Device> {
-        match self.get_active_component() {
-            Some(component) => component.get_device(),
-            None => None,
-        }
+        self.get_active_component()
+            .and_then(|component| component.get_device())
     }
 
     fn get_song(&mut self) -> Option<&mut Song> {
-        match self.get_active_component() {
-            Some(component) => component.get_song(),
-            None => None,
-        }
+        self.get_active_component()
+            .and_then(|component| component.get_song())
     }
 
     fn get_album(&mut self) -> Option<&mut Album> {
-        match self.get_active_component() {
-            Some(component) => component.get_album(),
-            None => None,
-        }
+        self.get_active_component()
+            .and_then(|component| component.get_album())
     }
 
     fn get_artist(&mut self) -> Option<&mut Artist> {
-        match self.get_active_component() {
-            Some(component) => component.get_artist(),
-            None => None,
-        }
+        self.get_active_component()
+            .and_then(|component| component.get_artist())
     }
 }
