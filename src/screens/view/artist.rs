@@ -59,14 +59,12 @@ impl Default for ViewArtistScreen {
 }
 
 impl ViewArtistScreen {
-    fn get_title(&self) -> String {
+    fn get_title(&mut self) -> String {
         let mut title = "View Artist".to_string();
 
-        if let Some(componet) = self.tabbed_view.clone().get_active_component() {
-            if let Some(artist) = componet.get_artist() {
-                if !artist.is_empty() {
-                    title = format!("{}", artist.name)
-                }
+        if let Some(artist) = self.get_artist() {
+            if !artist.is_empty() {
+                title = format!("{}", artist.name)
             }
         }
 
