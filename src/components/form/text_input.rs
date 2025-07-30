@@ -17,7 +17,7 @@ use crate::{
 
 use super::form::{FormMode, Input, InputValue};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct TextInput {
     pub title: String,
     pub value: String,

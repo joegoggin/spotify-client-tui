@@ -32,4 +32,5 @@ pub enum Message {
     RefreshSong,
     RefreshAlbum,
     RefreshArtist,
+    RefreshSearchResults,
 }

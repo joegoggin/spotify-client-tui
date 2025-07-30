@@ -3,7 +3,10 @@ use ratatui::{crossterm::event::KeyEvent, layout::Rect, Frame};
 use crate::core::{
     app::{App, AppResult},
     message::Message,
-    spotify::{album::Album, artist::Artist, device::Device, now_playing::NowPlaying, song::Song},
+    spotify::{
+        album::Album, artist::Artist, device::Device, now_playing::NowPlaying,
+        search_results::SearchResults, song::Song,
+    },
 };
 
 pub trait Component: ComponentClone {
@@ -37,6 +40,10 @@ pub trait Component: ComponentClone {
     }
 
     fn get_artist(&mut self) -> Option<&mut Artist> {
+        None
+    }
+
+    fn get_search_results(&mut self) -> Option<&mut SearchResults> {
         None
     }
 }

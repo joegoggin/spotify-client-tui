@@ -1,14 +1,17 @@
+use log::debug;
+
 use crate::{
     auth::server::AuthServer,
     core::{
         app::{App, AppResult},
         clap::Args,
-        spotify::{player::SpotifyPlayer, NameAndId},
+        spotify::{client::SpotifyClient, player::SpotifyPlayer, search_results, NameAndId},
     },
     screens::{home::HomeScreen, Screen, ScreenType},
     utils::error::{
         handle_error, throw_no_album_error, throw_no_artist_error, throw_no_device_error,
-        throw_no_now_playing_error, throw_no_song_error, throw_no_spotify_client_error,
+        throw_no_now_playing_error, throw_no_search_results_error, throw_no_song_error,
+        throw_no_spotify_client_error,
     },
 };
 
@@ -66,6 +69,7 @@ impl<'a> MessageHandler<'a> {
                 Message::RefreshSong => self.refresh_song().await,
                 Message::RefreshAlbum => self.refresh_album().await,
                 Message::RefreshArtist => self.refresh_artist().await,
+                Message::RefreshSearchResults => self.refresh_search_results().await,
             };
 
             if self.current_message.is_some() {
@@ -305,6 +309,20 @@ impl<'a> MessageHandler<'a> {
                     handle_error(result)
                 }
                 None => throw_no_artist_error(),
+            },
+            None => throw_no_spotify_client_error(),
+        }
+    }
+
+    async fn refresh_search_results(&mut self) -> Option<Message> {
+        match self.app.spotify_client.as_mut() {
+            Some(mut spotify_client) => match self.current_screen.get_search_results() {
+                Some(search_results) => {
+                    let result = search_results.refresh(&mut spotify_client).await;
+
+                    handle_error(result)
+                }
+                None => throw_no_search_results_error(),
             },
             None => throw_no_spotify_client_error(),
         }
