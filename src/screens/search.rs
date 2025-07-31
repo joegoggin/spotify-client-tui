@@ -7,10 +7,7 @@ use ratatui::{
 
 use crate::{
     components::{
-        form::{
-            form::{FormMode, Input},
-            text_input::TextInput,
-        },
+        form::{form::FormMode, text_input::TextInput},
         list::List,
         screen_block::ScreenBlock,
         Component,

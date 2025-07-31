@@ -1,11 +1,9 @@
-use log::debug;
-
 use crate::{
     auth::server::AuthServer,
     core::{
         app::{App, AppResult},
         clap::Args,
-        spotify::{client::SpotifyClient, player::SpotifyPlayer, search_results, NameAndId},
+        spotify::{player::SpotifyPlayer, NameAndId},
     },
     screens::{home::HomeScreen, Screen, ScreenType},
     utils::error::{
